@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isActiveMember() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.statut == 'actif';
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Profils utilisateurs : chacun lit/écrit le sien, un membre actif peut lire les autres
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Entreprises & Restaurants : lecture publique, écriture par le propriétaire ou admin
+    match /businesses/{bizId} {
+      allow read: if true;
+      allow create: if isActiveMember();
+      allow update, delete: if isSignedIn() &&
+        (resource.data.owner_uid == request.auth.uid || isAdmin());
+    }
+
+    match /restaurants/{restId} {
+      allow read: if true;
+      allow create: if isActiveMember();
+      allow update, delete: if isSignedIn() &&
+        (resource.data.owner_uid == request.auth.uid || isAdmin());
+    }
+
+    // Événements : lecture réservée aux membres actifs
+    match /events/{eventId} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember();
+      allow update, delete: if isSignedIn() &&
+        (resource.data.created_by == request.auth.uid || isAdmin());
+    }
+
+    // Offres d'emploi / Services B2B : réservé aux membres actifs
+    match /job_listings/{jobId} {
+      allow read, create: if isActiveMember();
+      allow update, delete: if isSignedIn() &&
+        (resource.data.posted_by == request.auth.uid || isAdmin());
+    }
+
+    match /services/{serviceId} {
+      allow read, create: if isActiveMember();
+      allow update, delete: if isSignedIn() &&
+        (resource.data.offered_by == request.auth.uid || isAdmin());
+    }
+
+    // Avis / commentaires : lecture réservée aux membres pour l'instant
+    match /reviews/{reviewId} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember();
+      allow update, delete: if isSignedIn() &&
+        (resource.data.author_uid == request.auth.uid || isAdmin());
+    }
+
+    // Vidéos : visibles une fois approuvées, modération admin
+    match /videos/{videoId} {
+      allow read: if resource.data.status == 'approved' || isAdmin();
+      allow create: if isActiveMember();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Logs admin : réservé aux admins
+    match /admin_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
