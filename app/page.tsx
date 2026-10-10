@@ -1,55 +1,45 @@
 import Link from "next/link";
+import { Briefcase, Utensils } from "lucide-react";
+import Logo from "@/components/Logo";
+import BrandStrip from "@/components/BrandStrip";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gold-50 to-white px-6">
-      <div className="max-w-2xl text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          RRTE MALI APP
-        </h1>
-        <p className="text-lg text-gray-600 mb-2 italic">
-          Réunir, Rester, Travailler Ensemble
-        </p>
-        <p className="text-gray-500 mb-10">
-          La plateforme communautaire des Franco-Maliens installés ou actifs au Mali.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link
-            href="/login"
-            className="px-8 py-3 bg-gold-500 text-white rounded-lg font-semibold hover:bg-gold-600 transition"
-          >
-            Connexion Membre
-          </Link>
-          <Link
-            href="/signup"
-            className="px-8 py-3 border-2 border-gold-500 text-gold-600 rounded-lg font-semibold hover:bg-gold-50 transition"
-          >
-            Devenir Membre
-          </Link>
+    <main className="flex min-h-screen flex-col bg-ink text-ink-fg">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-7 py-10">
+        <div className="mb-4 flex flex-col items-center gap-3 text-center">
+          <Logo size={176} />
+          <p className="text-[11px] uppercase tracking-[0.2em] text-ink-mute">
+            Communauté franco-malienne
+          </p>
         </div>
+        <Link href="/login" className="btn-gold">
+          Connexion membre
+        </Link>
+        <Link href="/signup" className="btn-outline">
+          Demander l’accès
+        </Link>
 
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+        <div className="mt-6 grid grid-cols-2 gap-3">
           <Link
             href="/entreprises"
-            className="p-5 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition"
+            className="rounded-2xl border border-[#454A50] p-4 transition hover:bg-ink-2"
           >
-            <h3 className="font-semibold text-gray-900">🏢 Entreprises</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Découvrez les entreprises du groupe RRTE — accès libre
-            </p>
+            <Briefcase size={20} className="text-gold-500" strokeWidth={1.75} />
+            <p className="mt-2 font-semibold">Entreprises</p>
+            <p className="mt-0.5 text-xs text-ink-mute">Accès libre</p>
           </Link>
           <Link
             href="/restaurants"
-            className="p-5 bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition"
+            className="rounded-2xl border border-[#454A50] p-4 transition hover:bg-ink-2"
           >
-            <h3 className="font-semibold text-gray-900">🍽️ Restaurants</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Les restaurants du groupe et leurs menus — accès libre
-            </p>
+            <Utensils size={20} className="text-gold-500" strokeWidth={1.75} />
+            <p className="mt-2 font-semibold">Restaurants</p>
+            <p className="mt-0.5 text-xs text-ink-mute">Accès libre</p>
           </Link>
         </div>
       </div>
+      <BrandStrip />
     </main>
   );
 }

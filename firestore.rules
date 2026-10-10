@@ -16,11 +16,20 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // Profils utilisateurs : chacun lit/écrit le sien, un membre actif peut lire les autres
+    // Profils utilisateurs
+    // - lecture : son propre profil, ou tout profil pour un membre actif / un admin
+    // - création : uniquement en statut "en_attente" avec le rôle "member"
+    // - modification : le membre ne peut pas changer son statut ni son rôle (seul un admin le peut)
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read: if isSignedIn() && (request.auth.uid == userId || isActiveMember() || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        request.resource.data.statut == 'en_attente' &&
+        request.resource.data.role == 'member';
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId &&
+          request.resource.data.statut == resource.data.statut &&
+          request.resource.data.role == resource.data.role) ||
+        isAdmin());
       allow delete: if isAdmin();
     }
 
@@ -39,12 +48,14 @@ service cloud.firestore {
         (resource.data.owner_uid == request.auth.uid || isAdmin());
     }
 
-    // Événements : lecture réservée aux membres actifs
+    // Événements : lecture réservée aux membres actifs, création/suppression par les admins,
+    // inscription : un membre actif peut modifier uniquement la liste "attendees"
     match /events/{eventId} {
       allow read: if isActiveMember();
-      allow create: if isActiveMember();
-      allow update, delete: if isSignedIn() &&
-        (resource.data.created_by == request.auth.uid || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isActiveMember() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees']));
+      allow delete: if isAdmin();
     }
 
     // Offres d'emploi / Services B2B : réservé aux membres actifs

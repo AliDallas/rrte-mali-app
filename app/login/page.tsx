@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
+import Logo from "@/components/Logo";
+import BrandStrip from "@/components/BrandStrip";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -19,8 +21,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/annuaire");
-    } catch (err: unknown) {
+      router.push("/accueil");
+    } catch {
       setError("Email ou mot de passe incorrect.");
     } finally {
       setLoading(false);
@@ -28,63 +30,54 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gold-50 px-6">
+    <main className="flex min-h-screen flex-col bg-ink text-ink-fg">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white p-8 rounded-xl shadow-md"
+        className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-7 py-10"
       >
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Connexion</h1>
-        <p className="text-gray-500 text-sm mb-6">
-          Accédez à l&apos;annuaire complet des membres RRTE.
-        </p>
+        <div className="mb-3 flex flex-col items-center gap-3">
+          <Link href="/">
+            <Logo size={120} />
+          </Link>
+          <h1 className="font-display text-2xl font-bold">Connexion</h1>
+        </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
-            {error}
-          </div>
+          <div className="rounded-xl bg-brand-red/20 p-3 text-sm text-[#F0897B]">{error}</div>
         )}
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email
-          </label>
+        <label className="block text-sm text-ink-mute">
+          Adresse e-mail
           <input
             type="email"
             required
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
+            className="field-dark mt-1.5"
+            placeholder="vous@exemple.com"
           />
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mot de passe
-          </label>
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Mot de passe
           <input
             type="password"
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
+            className="field-dark mt-1.5"
           />
-        </div>
+        </label>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 bg-gold-500 text-white rounded-lg font-semibold hover:bg-gold-600 transition disabled:opacity-50"
-        >
+        <button type="submit" disabled={loading} className="btn-gold mt-2">
           {loading ? "Connexion..." : "Se connecter"}
         </button>
-
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Pas encore membre ?{" "}
-          <Link href="/signup" className="text-gold-600 font-semibold hover:underline">
-            S&apos;inscrire
-          </Link>
-        </p>
+        <Link href="/signup" className="btn-outline">
+          Demander l’accès
+        </Link>
       </form>
+      <BrandStrip />
     </main>
   );
 }

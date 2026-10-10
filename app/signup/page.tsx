@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
+import Logo from "@/components/Logo";
+import BrandStrip from "@/components/BrandStrip";
 
 export default function SignupPage() {
   const { signup } = useAuth();
-  const router = useRouter();
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [email, setEmail] = useState("");
@@ -24,9 +24,10 @@ export default function SignupPage() {
       await signup(email, password, nom, prenom);
       setSuccess(true);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Une erreur est survenue.";
-      setError(message);
+      const code = (err as { code?: string })?.code;
+      if (code === "auth/email-already-in-use") setError("Cette adresse e-mail est déjà inscrite.");
+      else if (code === "auth/weak-password") setError("Mot de passe trop court (6 caractères minimum).");
+      else setError(err instanceof Error ? err.message : "Une erreur est survenue.");
     } finally {
       setLoading(false);
     }
@@ -34,118 +35,74 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gold-50 px-6">
-        <div className="max-w-md bg-white p-8 rounded-xl shadow-md text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">
-            Inscription reçue ✅
-          </h1>
-          <p className="text-gray-600 mb-2">
-            Un email de confirmation vous a été envoyé. Cliquez sur le lien pour
-            valider votre adresse.
+      <main className="flex min-h-screen flex-col bg-ink text-ink-fg">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-4 px-7 text-center">
+          <Logo size={96} />
+          <h1 className="font-display text-2xl font-bold">Inscription reçue</h1>
+          <p className="text-ink-mute">
+            Un e-mail de confirmation vous a été envoyé. Une fois votre adresse confirmée, un
+            administrateur examinera votre demande avant l’activation de votre accès.
           </p>
-          <p className="text-gray-500 text-sm">
-            Une fois confirmé, votre compte sera examiné par un administrateur
-            avant activation.
-          </p>
-          <Link
-            href="/"
-            className="inline-block mt-6 text-gold-600 font-semibold hover:underline"
-          >
-            Retour à l&apos;accueil
+          <Link href="/" className="btn-gold mt-3 max-w-xs">
+            Retour à l’accueil
           </Link>
         </div>
+        <BrandStrip />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gold-50 px-6">
+    <main className="flex min-h-screen flex-col bg-ink text-ink-fg">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white p-8 rounded-xl shadow-md"
+        className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-7 py-10"
       >
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          Devenir Membre RRTE
-        </h1>
-        <p className="text-gray-500 text-sm mb-6">
-          Réservé aux membres du groupe RRTE au Mali.
-        </p>
+        <div className="mb-2 flex flex-col items-center gap-3 text-center">
+          <Link href="/">
+            <Logo size={96} />
+          </Link>
+          <h1 className="font-display text-2xl font-bold">Rejoindre RRTE</h1>
+          <p className="text-sm text-ink-mute">
+            Réservé aux membres du groupe RRTE au Mali. Votre inscription est validée par un
+            administrateur.
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
-            {error}
-          </div>
+          <div className="rounded-xl bg-brand-red/20 p-3 text-sm text-[#F0897B]">{error}</div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Prénom
-            </label>
-            <input
-              type="text"
-              required
-              value={prenom}
-              onChange={(e) => setPrenom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom
-            </label>
-            <input
-              type="text"
-              required
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
-            />
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block text-sm text-ink-mute">
+            Prénom
+            <input required value={prenom} onChange={(e) => setPrenom(e.target.value)} className="field-dark mt-1.5" />
           </label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mot de passe
+          <label className="block text-sm text-ink-mute">
+            Nom
+            <input required value={nom} onChange={(e) => setNom(e.target.value)} className="field-dark mt-1.5" />
           </label>
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold-500"
-          />
         </div>
+        <label className="block text-sm text-ink-mute">
+          Adresse e-mail
+          <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Mot de passe
+          <input type="password" required minLength={6} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="field-dark mt-1.5" />
+        </label>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 bg-gold-500 text-white rounded-lg font-semibold hover:bg-gold-600 transition disabled:opacity-50"
-        >
-          {loading ? "Inscription..." : "S'inscrire"}
+        <button type="submit" disabled={loading} className="btn-gold mt-2">
+          {loading ? "Envoi..." : "Envoyer ma demande"}
         </button>
-
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="text-center text-sm text-ink-mute">
           Déjà membre ?{" "}
-          <Link href="/login" className="text-gold-600 font-semibold hover:underline">
+          <Link href="/login" className="font-semibold text-gold-500">
             Se connecter
           </Link>
         </p>
       </form>
+      <BrandStrip />
     </main>
   );
 }

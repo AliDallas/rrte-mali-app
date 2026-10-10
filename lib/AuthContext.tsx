@@ -12,7 +12,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-interface MemberProfile {
+export interface MemberProfile {
   uid: string;
   email: string;
   nom: string;
