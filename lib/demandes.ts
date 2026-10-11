@@ -21,6 +21,7 @@ export interface Reponse {
   auteurPhoto: string;
   texte: string;
   tel: string;
+  reco: { nom: string; tel: string; metier: string } | null;
   createdAt: number;
 }
 
@@ -51,6 +52,14 @@ export function reponseDepuisDoc(id: string, x: Record<string, unknown>): Repons
     auteurPhoto: s(x.auteurPhoto),
     texte: s(x.texte),
     tel: s(x.tel),
+    reco:
+      x.reco && typeof x.reco === "object" && typeof (x.reco as Record<string, unknown>).nom === "string"
+        ? {
+            nom: s((x.reco as Record<string, unknown>).nom),
+            tel: s((x.reco as Record<string, unknown>).tel),
+            metier: s((x.reco as Record<string, unknown>).metier),
+          }
+        : null,
     createdAt: typeof x.createdAt === "number" ? x.createdAt : 0,
   };
 }

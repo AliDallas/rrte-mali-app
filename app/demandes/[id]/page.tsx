@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  addDoc, collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, updateDoc, where,
+  addDoc, collection, deleteDoc, serverTimestamp, doc, getDoc, getDocs, increment, orderBy, query, updateDoc, where,
 } from "firebase/firestore";
 import { CheckCircle2, ChevronLeft, MessageCircle, Phone, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
@@ -12,9 +12,9 @@ import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Demande, Reponse, demandeDepuisDoc, ilYa, motsCles, reponseDepuisDoc } from "@/lib/demandes";
-import { Fiche, chiffres, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
-import { Prestataire, prestataireDepuisDoc } from "@/lib/prestataires";
-import { lireCache, ecrireCache } from "@/lib/cache";
+import { Fiche, chiffres, cle, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
+import { METIERS, Prestataire, prestataireDepuisDoc } from "@/lib/prestataires";
+import { lireCache, ecrireCache, viderCache } from "@/lib/cache";
 
 function norm(s: string) {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -36,6 +36,11 @@ export default function DemandeDetailPage() {
   const [envoi, setEnvoi] = useState(false);
   const [confirme, setConfirme] = useState(false);
   const [msg, setMsg] = useState("");
+  const [recoOn, setRecoOn] = useState(false);
+  const [recoNom, setRecoNom] = useState("");
+  const [recoTel, setRecoTel] = useState("");
+  const [recoMetier, setRecoMetier] = useState("");
+  const [ajoutEnCours, setAjoutEnCours] = useState<string | null>(null);
 
   const actif = profile?.statut === "actif";
   const estAuteur = !!d && d.auteurUid === user?.uid;
@@ -103,16 +108,50 @@ export default function DemandeDetailPage() {
         auteurPhoto: profile.photo ?? "",
         texte: texte.trim(),
         tel: joindre ? profile.telephone ?? "" : "",
+        ...(recoOn && recoNom.trim() && recoTel.trim()
+          ? { reco: { nom: recoNom.trim(), tel: recoTel.trim(), metier: recoMetier || d?.categorie || "" } }
+          : {}),
         createdAt: Date.now(),
       });
       await updateDoc(doc(db, "demandes", id), { nbReponses: increment(1) });
       setTexte("");
+      setRecoOn(false);
+      setRecoNom("");
+      setRecoTel("");
       await chargerReponses();
       setD((x) => (x ? { ...x, nbReponses: x.nbReponses + 1 } : x));
     } catch {
       setMsg("Impossible d’envoyer votre réponse. Réessayez.");
     } finally {
       setEnvoi(false);
+    }
+  }
+
+  const dejaRecommande = (tel: string) => presta.some((p) => cle(p.tel) === cle(tel) && cle(tel).length >= 8);
+
+  async function ajouterAuxRecommandes(r: Reponse) {
+    if (!user || !profile || !r.reco) return;
+    setAjoutEnCours(r.id);
+    try {
+      const data = {
+        nom: r.reco.nom,
+        metier: r.reco.metier,
+        tel: r.reco.tel,
+        quartier: "",
+        description: d ? `Recommandé suite à la demande « ${d.titre} »` : "",
+        ownerUid: user.uid,
+        ownerNom: `${profile.prenom} ${profile.nom}`.trim(),
+        nbAvis: 0,
+        sommeNotes: 0,
+        createdAt: serverTimestamp(),
+      };
+      const ref = await addDoc(collection(db, "prestataires"), data);
+      viderCache("prestataires");
+      setPresta((l) => [...l, prestataireDepuisDoc(ref.id, { ...data, createdAt: Date.now() })]);
+    } catch {
+      setMsg("Impossible d’ajouter aux Recommandés pour le moment.");
+    } finally {
+      setAjoutEnCours(null);
     }
   }
 
@@ -241,6 +280,24 @@ export default function DemandeDetailPage() {
                   )}
                 </div>
                 <p className="whitespace-pre-wrap text-[15px]">{r.texte}</p>
+                {r.reco && (
+                  <div className="space-y-2 rounded-xl border border-gold-500 bg-gold-100/40 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted">Contact recommandé</p>
+                    <p className="text-sm font-semibold">{r.reco.nom}{r.reco.metier ? ` · ${r.reco.metier}` : ""}</p>
+                    {contacts(r.reco.tel, `Salam, on m’a donné ton contact via l’application RRTE.`)}
+                    {dejaRecommande(r.reco.tel) ? (
+                      <p className="text-xs font-semibold text-emerald-700">Déjà dans les Recommandés</p>
+                    ) : (
+                      <button
+                        onClick={() => ajouterAuxRecommandes(r)}
+                        disabled={ajoutEnCours === r.id}
+                        className="rounded-full border border-gold-500 bg-white px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
+                      >
+                        {ajoutEnCours === r.id ? "Ajout..." : "Ajouter aux Recommandés"}
+                      </button>
+                    )}
+                  </div>
+                )}
                 {r.tel && contacts(r.tel, `Salam, je te contacte suite à ta réponse sur l’application RRTE.`)}
               </div>
             ))}
@@ -262,6 +319,26 @@ export default function DemandeDetailPage() {
                   <input type="checkbox" checked={joindre} onChange={(e) => setJoindre(e.target.checked)} />
                   Joindre mon numéro pour être contacté
                 </label>
+              )}
+              {d.type === "cherche" && !estAuteur && (
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={recoOn} onChange={(e) => setRecoOn(e.target.checked)} />
+                    Je recommande quelqu’un (nom + numéro)
+                  </label>
+                  {recoOn && (
+                    <div className="space-y-2">
+                      <input value={recoNom} onChange={(e) => setRecoNom(e.target.value)} placeholder="Nom de la personne ou de l’entreprise" className="w-full rounded-2xl border border-line bg-white px-4 py-3" />
+                      <input type="tel" value={recoTel} onChange={(e) => setRecoTel(e.target.value)} placeholder="Numéro de téléphone" className="w-full rounded-2xl border border-line bg-white px-4 py-3" />
+                      <select value={recoMetier || d.categorie} onChange={(e) => setRecoMetier(e.target.value)} className="w-full rounded-2xl border border-line bg-white px-4 py-3">
+                        <option value="">Métier</option>
+                        {METIERS.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
               )}
               {msg && <p className="text-sm text-brand-red">{msg}</p>}
               <button type="submit" disabled={envoi} className="btn-gold">

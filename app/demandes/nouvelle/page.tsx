@@ -10,6 +10,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { METIERS } from "@/lib/prestataires";
 import { TypeDemande } from "@/lib/demandes";
+import Suggestions from "@/components/Suggestions";
 
 const input =
   "mt-1.5 w-full rounded-2xl border border-line bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold-500";
@@ -57,6 +58,9 @@ export default function NouvelleDemandePage() {
       <Link href="/demandes" className="mb-4 inline-flex items-center gap-1 text-sm text-muted">
         <ChevronLeft size={16} /> Demandes
       </Link>
+      <div className="mb-4">
+        {type === "cherche" && <Suggestions texte={titre} categorie={categorie} exclureUid={user?.uid} />}
+      </div>
       <form onSubmit={envoyer} className="card space-y-4 p-5">
         <div className="flex gap-2">
           <button type="button" onClick={() => setType("cherche")} className={chip(type === "cherche")}>Je cherche</button>
@@ -87,7 +91,7 @@ export default function NouvelleDemandePage() {
         </label>
         {msg && <p className="text-sm text-brand-red">{msg}</p>}
         <button type="submit" disabled={saving} className="btn-gold">
-          {saving ? "Publication..." : "Publier"}
+          {saving ? "Publication..." : (type === "cherche" ? "Publier quand même" : "Publier")}
         </button>
       </form>
     </AppShell>
