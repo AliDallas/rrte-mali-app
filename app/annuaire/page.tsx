@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { MessageCircle, Phone, Search } from "lucide-react";
+import { MessageCircle, Phone, Search, SlidersHorizontal } from "lucide-react";
 import { TAGS } from "@/lib/tags";
 import Badges from "@/components/Badges";
 import AppShell from "@/components/AppShell";
@@ -23,6 +23,7 @@ export default function AnnuairePage() {
   const [avecEnt, setAvecEnt] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
   const [q, setQ] = useState("");
+  const [ouvert, setOuvert] = useState(false);
   const [quartier, setQuartier] = useState("");
   const [pays, setPays] = useState("");
   const [seulEnt, setSeulEnt] = useState(false);
@@ -98,6 +99,7 @@ export default function AnnuairePage() {
   const chip = (on: boolean) =>
     `max-w-full rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`;
   const nbComptes = fiches.filter((f) => f.uid).length;
+  const nbFiltres = [tag, seulCherche, seulPropose, compte, quartier, pays, seulEnt, seulIncomplet, seulAdmin].filter(Boolean).length;
   const filtresActifs = !!(tag || seulCherche || seulPropose || compte || quartier || pays || seulEnt || seulIncomplet || seulAdmin);
 
   return (
@@ -111,17 +113,34 @@ export default function AnnuairePage() {
           : "Chargement..."
       }
     >
-      <label className="card mb-3 flex items-center gap-3 px-4 py-3 text-muted">
-        <Search size={18} strokeWidth={1.75} />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Nom, métier, compétence, quartier…"
-          className="w-full bg-transparent text-[#202326] outline-none placeholder:text-muted"
-        />
-      </label>
+      <div className="mb-3 flex items-center gap-2">
+        <label className="card flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-muted">
+          <Search size={18} strokeWidth={1.75} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Nom, métier, compétence, quartier…"
+            className="w-full min-w-0 bg-transparent text-[#202326] outline-none placeholder:text-muted"
+          />
+        </label>
+        <button
+          onClick={() => setOuvert((v) => !v)}
+          aria-label="Filtres"
+          className={`relative flex h-12 w-12 flex-none items-center justify-center rounded-2xl border ${
+            ouvert || nbFiltres > 0 ? "border-gold-500 bg-gold-500 text-ink" : "border-line bg-white text-muted"
+          }`}
+        >
+          <SlidersHorizontal size={20} strokeWidth={1.75} />
+          {nbFiltres > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-red px-1 text-[11px] font-bold text-white">
+              {nbFiltres}
+            </span>
+          )}
+        </button>
+      </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {ouvert && (
+      <div className="card mb-4 flex flex-wrap items-center gap-2 p-3">
         <select value={quartier} onChange={(e) => setQuartier(e.target.value)} className={chip(!!quartier)}>
           <option value="">Quartier</option>
           {quartiers.map(([k, v]) => (
@@ -186,6 +205,7 @@ export default function AnnuairePage() {
           </button>
         )}
       </div>
+      )}
 
       {loaded && filtered.length === 0 && (
         <p className="card p-6 text-center text-muted">
