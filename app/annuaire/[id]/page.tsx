@@ -7,6 +7,7 @@ import { collection, doc, getDoc, getDocs, query, where } from "firebase/firesto
 import { Briefcase, ChevronLeft, Mail, MessageCircle, Phone } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
+import Badges from "@/components/Badges";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Fiche, chiffres, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
@@ -69,6 +70,7 @@ export default function FicheDetailPage() {
                 <p className="text-sm text-muted">{[fiche.ville, fiche.pays].filter(Boolean).join(" · ")}</p>
               )}
             </div>
+            <Badges admin={!!fiche.admin} />
             {fiche.aConfirmer && (
               <span className="rounded-full bg-gold-100 px-3 py-1 text-xs font-semibold text-gold-700">
                 Profil à compléter par le membre

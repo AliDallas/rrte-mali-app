@@ -18,6 +18,7 @@ export interface Fiche {
   presentation: string;
   logo: string;
   photo: string;
+  admin: boolean;
   uid: string | null;
 }
 
@@ -71,6 +72,7 @@ export function ficheDepuisDoc(id: string, x: Record<string, unknown>): Fiche {
     presentation: s(x.presentation),
     logo: s(x.logo),
     photo: s(x.photo),
+    admin: x.admin === true,
     uid: typeof x.uid === "string" ? x.uid : null,
   };
 }
@@ -112,4 +114,9 @@ export function lireCsv(texte: string): Record<string, string>[] {
     head.forEach((h, i) => (o[h] = (r[i] ?? "").trim()));
     return o;
   });
+}
+
+/** Une fiche est « à compléter » tant qu'il n'y a ni activité ni compétences. */
+export function ficheIncomplete(f: Pick<Fiche, "activite" | "competences">): boolean {
+  return !f.activite.trim() && !f.competences.trim();
 }

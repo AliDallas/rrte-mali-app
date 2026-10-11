@@ -1,6 +1,8 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -47,6 +49,24 @@ export default function AppShell({
   const { user, profile, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  const [enAttente, setEnAttente] = useState(0);
+  const estAdmin = profile?.role === "admin" && profile?.statut === "actif";
+
+  useEffect(() => {
+    if (!estAdmin) return;
+    let stop = false;
+    const charger = () =>
+      getDocs(query(collection(db, "users"), where("statut", "==", "en_attente")))
+        .then((r) => !stop && setEnAttente(r.size))
+        .catch(() => undefined);
+    charger();
+    const t = setInterval(charger, 60000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [estAdmin]);
 
   useEffect(() => {
     if (requireAuth && !loading && !user) router.push("/login");
@@ -122,7 +142,14 @@ export default function AppShell({
                   on ? "text-gold-500" : "text-ink-mute"
                 }`}
               >
-                <Icon size={20} strokeWidth={1.75} />
+                <span className="relative">
+                  <Icon size={20} strokeWidth={1.75} />
+                  {href === "/profil" && estAdmin && enAttente > 0 && (
+                    <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-red px-1 text-[10px] font-bold text-white">
+                      {enAttente}
+                    </span>
+                  )}
+                </span>
                 {label}
               </Link>
             );

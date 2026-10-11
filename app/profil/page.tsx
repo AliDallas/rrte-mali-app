@@ -1,7 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import Badges from "@/components/Badges";
+import { ficheIncomplete, ficheDepuisDoc } from "@/lib/fiches";
 import { LogOut, ShieldCheck, ChevronRight, Mail, Pencil } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
@@ -10,6 +15,26 @@ import { useAuth } from "@/lib/AuthContext";
 export default function ProfilPage() {
   const { profile, logout } = useAuth();
   const router = useRouter();
+  const [incomplete, setIncomplete] = useState(false);
+  const [enAttente, setEnAttente] = useState(0);
+  const uid = profile?.uid;
+  const admin = profile?.role === "admin";
+
+  useEffect(() => {
+    if (!uid) return;
+    getDocs(query(collection(db, "fiches"), where("uid", "==", uid)))
+      .then((r) => {
+        if (r.empty) return;
+        const f = ficheDepuisDoc(r.docs[0].id, r.docs[0].data());
+        setIncomplete(ficheIncomplete(f));
+      })
+      .catch(() => undefined);
+    if (admin) {
+      getDocs(query(collection(db, "users"), where("statut", "==", "en_attente")))
+        .then((r) => setEnAttente(r.size))
+        .catch(() => undefined);
+    }
+  }, [uid, admin]);
 
   async function handleLogout() {
     await logout();
@@ -27,11 +52,17 @@ export default function ProfilPage() {
           <p className="flex items-center gap-1.5 truncate text-sm text-muted">
             <Mail size={14} /> {profile?.email}
           </p>
-          <span className="mt-1.5 inline-block rounded-full bg-gold-100 px-2.5 py-0.5 text-[11px] font-semibold text-gold-700">
-            {profile?.role === "admin" ? "Administrateur" : "Membre RRTE"}
-          </span>
+          <div className="mt-1.5"><Badges admin={admin} compact /></div>
         </div>
       </div>
+
+      {incomplete && (
+        <Link href="/profil/modifier" className="mb-4 flex items-center gap-3 rounded-2xl border border-brand-red/30 bg-brand-red/5 p-4">
+          <Pencil size={20} className="text-brand-red" strokeWidth={1.75} />
+          <span className="flex-1 text-sm font-semibold">Votre fiche est à compléter : ajoutez votre activité et vos compétences.</span>
+          <ChevronRight size={18} className="text-muted" />
+        </Link>
+      )}
 
       <Link href="/profil/modifier" className="card mb-4 flex items-center gap-3 p-4">
         <Pencil size={20} className="text-gold-700" strokeWidth={1.75} />
@@ -43,6 +74,11 @@ export default function ProfilPage() {
         <Link href="/admin" className="card mb-4 flex items-center gap-3 p-4">
           <ShieldCheck size={20} className="text-gold-700" strokeWidth={1.75} />
           <span className="flex-1 font-semibold">Administration</span>
+          {enAttente > 0 && (
+            <span className="rounded-full bg-brand-red px-2.5 py-0.5 text-xs font-bold text-white">
+              {enAttente} inscription{enAttente > 1 ? "s" : ""} à valider
+            </span>
+          )}
           <ChevronRight size={18} className="text-muted" />
         </Link>
       )}

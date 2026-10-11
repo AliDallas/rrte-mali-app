@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { viderCache } from "@/lib/cache";
 import { ChevronLeft, Search, ShieldCheck } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
@@ -18,10 +19,26 @@ export default function AdministrateursPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const isAdmin = profile?.role === "admin";
 
+  async function syncFiche(uid: string, admin: boolean) {
+    try {
+      const r = await getDocs(query(collection(db, "fiches"), where("uid", "==", uid)));
+      await Promise.all(
+        r.docs.filter((d) => !!d.data().admin !== admin).map((d) => updateDoc(d.ref, { admin })),
+      );
+      viderCache("annuaire");
+    } catch {
+      /* fiche absente ou non modifiable */
+    }
+  }
+
   useEffect(() => {
     if (!isAdmin) return;
     getDocs(query(collection(db, "users"), where("statut", "==", "actif")))
-      .then((r) => setMembres(r.docs.map((d) => d.data() as MemberProfile)))
+      .then((r) => {
+        const l = r.docs.map((d) => d.data() as MemberProfile);
+        setMembres(l);
+        l.filter((m) => m.role === "admin").forEach((m) => syncFiche(m.uid, true));
+      })
       .catch(() => undefined)
       .finally(() => setLoaded(true));
   }, [isAdmin]);
@@ -30,6 +47,7 @@ export default function AdministrateursPage() {
     setBusy(m.uid);
     try {
       await updateDoc(doc(db, "users", m.uid), { role });
+      await syncFiche(m.uid, role === "admin");
       setMembres((l) => l.map((x) => (x.uid === m.uid ? { ...x, role } : x)));
     } finally {
       setBusy(null);
