@@ -43,7 +43,7 @@ export default function DemandesPage() {
   }, [liste, onglet, type, cat, q, user]);
 
   const chip = (on: boolean) =>
-    `flex-none rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`;
+    `max-w-full rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`;
 
   return (
     <AppShell title="Demandes" subtitle="Je cherche · Je propose">
@@ -66,7 +66,7 @@ export default function DemandesPage() {
         />
       </label>
 
-      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <button onClick={() => setType(type === "cherche" ? "" : "cherche")} className={chip(type === "cherche")}>Je cherche</button>
         <button onClick={() => setType(type === "propose" ? "" : "propose")} className={chip(type === "propose")}>Je propose</button>
         <select value={cat} onChange={(e) => setCat(e.target.value)} className={chip(!!cat)}>

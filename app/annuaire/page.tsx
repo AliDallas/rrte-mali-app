@@ -96,7 +96,7 @@ export default function AnnuairePage() {
   }, [fiches, q, quartier, pays, seulEnt, seulIncomplet, seulAdmin, compte, tag, seulCherche, seulPropose, avecEnt]);
 
   const chip = (on: boolean) =>
-    `flex-none rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`;
+    `max-w-full rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`;
   const nbComptes = fiches.filter((f) => f.uid).length;
   const filtresActifs = !!(tag || seulCherche || seulPropose || compte || quartier || pays || seulEnt || seulIncomplet || seulAdmin);
 
@@ -107,7 +107,7 @@ export default function AnnuairePage() {
         loaded
           ? filtresActifs || q
             ? `${filtered.length} sur ${fiches.length} membres`
-            : `${fiches.length} membres · ${nbComptes} ont créé leur compte`
+            : `${fiches.length} membres · ${nbComptes} ${nbComptes > 1 ? "ont" : "a"} créé leur compte`
           : "Chargement..."
       }
     >
@@ -121,7 +121,7 @@ export default function AnnuairePage() {
         />
       </label>
 
-      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <select value={quartier} onChange={(e) => setQuartier(e.target.value)} className={chip(!!quartier)}>
           <option value="">Quartier</option>
           {quartiers.map(([k, v]) => (
