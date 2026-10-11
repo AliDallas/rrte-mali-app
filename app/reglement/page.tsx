@@ -18,6 +18,9 @@ export default function ReglementPage() {
   return (
     <AppShell title="Le groupe RRTE" subtitle="Présentation, accueil et règlement" requireAuth={false}>
       <div className="space-y-4">
+        <div className="rounded-xl bg-gold-500/10 p-3 text-[15px] font-semibold">
+          Pour intégrer le groupe, il faut être Franco-Malien installé au Mali ou y exercer une activité.
+        </div>
         <section className="card space-y-3 p-5">
           <h2 className="font-display text-lg font-bold">Présentation et objectif du groupe</h2>
           <p className="text-[15px]">

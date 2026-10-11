@@ -114,8 +114,8 @@ export default function SignupPage() {
           </Link>
           <h1 className="font-display text-2xl font-bold">Rejoindre RRTE</h1>
           <p className="text-sm text-ink-mute">
-            Réservé aux membres du groupe RRTE au Mali. Votre inscription est validée par un
-            administrateur.
+            Réservé aux Franco-Maliens installés au Mali ou y exerçant une activité. Votre
+            inscription est validée par un administrateur.
           </p>
         </div>
 
