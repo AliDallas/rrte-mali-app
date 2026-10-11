@@ -27,6 +27,7 @@ export default function AnnuairePage() {
   const [seulEnt, setSeulEnt] = useState(false);
   const [seulIncomplet, setSeulIncomplet] = useState(false);
   const [seulAdmin, setSeulAdmin] = useState(false);
+  const [compte, setCompte] = useState<"" | "avec" | "sans">("");
 
   useEffect(() => {
     if (!profile || profile.statut !== "actif") return;
@@ -81,13 +82,16 @@ export default function AnnuairePage() {
       if (seulEnt && !(f.uid && avecEnt.has(f.uid))) return false;
       if (seulIncomplet && !ficheIncomplete(f)) return false;
       if (seulAdmin && !f.admin) return false;
+      if (compte === "avec" && !f.uid) return false;
+      if (compte === "sans" && f.uid) return false;
       return !s || norm(`${f.prenom} ${f.nom} ${f.activite} ${f.competences} ${f.ville} ${f.presentation}`).includes(s);
     });
-  }, [fiches, q, quartier, pays, seulEnt, seulIncomplet, seulAdmin, avecEnt]);
+  }, [fiches, q, quartier, pays, seulEnt, seulIncomplet, seulAdmin, compte, avecEnt]);
 
   const chip = (on: boolean) =>
     `flex-none rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`;
-  const filtresActifs = !!(quartier || pays || seulEnt || seulIncomplet || seulAdmin);
+  const nbComptes = fiches.filter((f) => f.uid).length;
+  const filtresActifs = !!(compte || quartier || pays || seulEnt || seulIncomplet || seulAdmin);
 
   return (
     <AppShell
@@ -96,7 +100,7 @@ export default function AnnuairePage() {
         loaded
           ? filtresActifs || q
             ? `${filtered.length} sur ${fiches.length} membres`
-            : `${fiches.length} membre${fiches.length > 1 ? "s" : ""} dans l’annuaire`
+            : `${fiches.length} membres · ${nbComptes} ont créé leur compte`
           : "Chargement..."
       }
     >
@@ -127,6 +131,12 @@ export default function AnnuairePage() {
             </option>
           ))}
         </select>
+        <button onClick={() => setCompte((v) => (v === "avec" ? "" : "avec"))} className={chip(compte === "avec")}>
+          Compte créé
+        </button>
+        <button onClick={() => setCompte((v) => (v === "sans" ? "" : "sans"))} className={chip(compte === "sans")}>
+          Sans compte
+        </button>
         <button onClick={() => setSeulEnt((v) => !v)} className={chip(seulEnt)}>
           Avec entreprise
         </button>
@@ -144,6 +154,7 @@ export default function AnnuairePage() {
               setSeulEnt(false);
               setSeulIncomplet(false);
               setSeulAdmin(false);
+              setCompte("");
             }}
             className="flex-none text-sm font-semibold text-brand-red"
           >
@@ -160,9 +171,12 @@ export default function AnnuairePage() {
 
       <div className="grid grid-cols-2 gap-3">
         {filtered.map((f) => (
-          <Link key={f.id} href={`/annuaire/${f.id}`} className="card flex flex-col items-center gap-1 px-3 py-5 text-center">
+          <Link key={f.id} href={`/annuaire/${f.id}`} className={`card flex flex-col items-center gap-1 px-3 py-5 text-center ${f.uid ? "border-2 border-emerald-500 bg-emerald-50" : "border border-dashed border-line opacity-90"}`}>
             <Avatar prenom={f.prenom || f.nom} nom={f.prenom ? f.nom : ""} size={56} photo={f.photo} />
             <p className="mt-1 text-sm font-semibold">{nomComplet(f)}</p>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${f.uid ? "bg-emerald-600 text-white" : "bg-gray-200 text-muted"}`}>
+              {f.uid ? "Compte créé" : "Pas encore inscrit"}
+            </span>
             {f.admin && <Badges admin compact />}
             {f.activite && <p className="line-clamp-2 text-xs text-muted">{f.activite}</p>}
             {ficheIncomplete(f) && (

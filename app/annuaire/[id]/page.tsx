@@ -71,6 +71,9 @@ export default function FicheDetailPage() {
               )}
             </div>
             <Badges admin={!!fiche.admin} />
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${fiche.uid ? "bg-emerald-600 text-white" : "bg-gray-200 text-muted"}`}>
+              {fiche.uid ? "Compte créé sur l’application" : "Pas encore inscrit sur l’application"}
+            </span>
             {fiche.aConfirmer && (
               <span className="rounded-full bg-gold-100 px-3 py-1 text-xs font-semibold text-gold-700">
                 Profil à compléter par le membre

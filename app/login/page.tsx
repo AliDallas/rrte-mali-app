@@ -70,6 +70,10 @@ export default function LoginPage() {
           />
         </label>
 
+        <Link href="/mot-de-passe-oublie" className="-mt-1 text-right text-sm text-gold-500">
+          Mot de passe oublié ?
+        </Link>
+
         <button type="submit" disabled={loading} className="btn-gold mt-2">
           {loading ? "Connexion..." : "Se connecter"}
         </button>
