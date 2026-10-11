@@ -14,7 +14,23 @@ export interface Fiche {
   info: string;
   aConfirmer: boolean;
   statutFiche: string;
+  pays: string;
+  presentation: string;
+  logo: string;
   uid: string | null;
+}
+
+/** Réponses du questionnaire saisies à l'inscription. */
+export interface FicheSaisie {
+  reseaux: string;
+  pays: string;
+  quartier: string;
+  anneeRetour: string;
+  activite: string;
+  presentation: string;
+  logo: string;
+  competences: string;
+  objectif: string;
 }
 
 /** Clé de rapprochement : les 8 derniers chiffres d'un numéro (indépendant de l'indicatif). */
@@ -49,6 +65,9 @@ export function ficheDepuisDoc(id: string, x: Record<string, unknown>): Fiche {
     info: s(x.info),
     aConfirmer: x.aConfirmer === true,
     statutFiche: s(x.statutFiche),
+    pays: s(x.pays),
+    presentation: s(x.presentation),
+    logo: s(x.logo),
     uid: typeof x.uid === "string" ? x.uid : null,
   };
 }

@@ -10,6 +10,7 @@ import {
   CalendarDays,
   User,
   Utensils,
+  ThumbsUp,
   LogIn,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
@@ -20,6 +21,7 @@ const MEMBER_NAV = [
   { href: "/accueil", label: "Accueil", Icon: Home },
   { href: "/annuaire", label: "Membres", Icon: Users },
   { href: "/entreprises", label: "Entreprises", Icon: Briefcase },
+  { href: "/prestataires", label: "Recommandés", Icon: ThumbsUp },
   { href: "/evenements", label: "Événements", Icon: CalendarDays },
   { href: "/profil", label: "Profil", Icon: User },
 ];

@@ -40,6 +40,38 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Entreprises des membres (5 maximum par membre, contrôlé par l'application) : membres actifs uniquement
+    match /entreprises/{entId} {
+      allow read: if isAdmin() || (isActiveMember() &&
+        (resource.data.statut == 'publie' || resource.data.ownerUid == request.auth.uid));
+      allow create: if isAdmin() || (isActiveMember() &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.statut == 'publie');
+      allow update: if isAdmin() || (isActiveMember() &&
+        resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == resource.data.ownerUid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+    }
+
+    // Prestataires recommandés (coiffeur, couturier, plombier…) avec notes et commentaires
+    match /prestataires/{pid} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isAdmin() ||
+        (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+          request.resource.data.ownerUid == resource.data.ownerUid) ||
+        (isActiveMember() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nbAvis', 'sommeNotes']));
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+
+      match /avis/{avisId} {
+        allow read: if isActiveMember();
+        allow create, update: if isActiveMember() && request.auth.uid == avisId &&
+          request.resource.data.uid == request.auth.uid;
+        allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == avisId);
+      }
+    }
+
     match /businesses/{bizId} {
       allow read: if true;
       allow create: if isActiveMember();

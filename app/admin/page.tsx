@@ -2,18 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { Check, FileSpreadsheet, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth, MemberProfile } from "@/lib/AuthContext";
-import { cle, nomComplet, ficheDepuisDoc, Fiche } from "@/lib/fiches";
+import { Entreprise, entrepriseDepuisDoc, saisieVersDoc } from "@/lib/entreprises";
+import { chiffres, cle, nomComplet, ficheDepuisDoc, Fiche } from "@/lib/fiches";
 
 export default function AdminPage() {
   const { profile } = useAuth();
   const [pending, setPending] = useState<MemberProfile[]>([]);
   const [liens, setLiens] = useState<Record<string, Fiche>>({});
+  const [entAttente, setEntAttente] = useState<Entreprise[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const isAdmin = profile?.role === "admin";
@@ -31,6 +33,8 @@ export default function AdminPage() {
       if (!r.empty) trouves[m.uid] = ficheDepuisDoc(r.docs[0].id, r.docs[0].data());
     }
     setLiens(trouves);
+    const ents = await getDocs(query(collection(db, "entreprises"), where("statut", "==", "en_attente")));
+    setEntAttente(ents.docs.map((d) => entrepriseDepuisDoc(d.id, d.data())));
     setLoaded(true);
   }, []);
 
@@ -41,11 +45,64 @@ export default function AdminPage() {
   async function decide(uid: string, statut: "actif" | "refuse") {
     setBusy(uid);
     try {
-      await updateDoc(doc(db, "users", uid), { statut });
-      if (statut === "actif" && liens[uid]) {
-        await updateDoc(doc(db, "fiches", liens[uid].id), { uid });
+      const m = pending.find((x) => x.uid === uid);
+      if (statut === "actif" && m) {
+        // la fiche saisie à l'inscription alimente l'annuaire (sans créer de doublon)
+        const f = m.fiche;
+        const tel = m.telephone || "";
+        const donnees: Record<string, unknown> = { uid, email: m.email, statutFiche: "Fiche complète", aConfirmer: false };
+        const mettre = (k: string, v?: string) => {
+          if (v && v.trim()) donnees[k] = v.trim();
+        };
+        if (f) {
+          mettre("reseaux", f.reseaux);
+          mettre("pays", f.pays);
+          mettre("ville", f.quartier);
+          mettre("anciennete", f.anneeRetour);
+          mettre("activite", f.activite);
+          mettre("presentation", f.presentation);
+          mettre("logo", f.logo);
+          mettre("competences", f.competences);
+          mettre("attentes", f.objectif);
+        }
+        const existante = liens[uid];
+        if (existante) {
+          await setDoc(doc(db, "fiches", existante.id), donnees, { merge: true });
+        } else {
+          const id = chiffres(tel) || uid;
+          await setDoc(
+            doc(db, "fiches", id),
+            { ...donnees, nom: m.nom, prenom: m.prenom, tels: tel ? [tel] : [], cles: tel ? [cle(tel)] : [], info: "" },
+            { merge: true }
+          );
+        }
       }
-      setPending((p) => p.filter((m) => m.uid !== uid));
+      if (statut === "actif" && m?.entreprises?.length) {
+        // les entreprises saisies à l'inscription sont publiées d'office (l'admin vient de valider la personne)
+        for (const ent of m.entreprises) {
+          if (!ent.nom?.trim()) continue;
+          await addDoc(collection(db, "entreprises"), {
+            ...saisieVersDoc(ent),
+            ownerUid: uid,
+            ownerNom: `${m.prenom} ${m.nom}`.trim(),
+            statut: "publie",
+            createdAt: serverTimestamp(),
+          });
+        }
+      }
+      await updateDoc(doc(db, "users", uid), { statut });
+      setPending((p) => p.filter((x) => x.uid !== uid));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function decideEnt(id: string, publier: boolean) {
+    setBusy(id);
+    try {
+      if (publier) await updateDoc(doc(db, "entreprises", id), { statut: "publie" });
+      else await deleteDoc(doc(db, "entreprises", id));
+      setEntAttente((l) => l.filter((x) => x.id !== id));
     } finally {
       setBusy(null);
     }
@@ -79,6 +136,11 @@ export default function AdminPage() {
                 </p>
                 <p className="truncate text-sm text-muted">{m.email}</p>
                 {m.telephone && <p className="truncate text-sm text-muted">{m.telephone}</p>}
+                {m.fiche && (m.fiche.activite || m.fiche.pays) && (
+                  <p className="mt-1 text-sm">
+                    {[m.fiche.activite, m.fiche.quartier, m.fiche.pays].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 {liens[m.uid] ? (
                   <p className="mt-1 text-xs font-semibold text-[#3C7026]">
                     Fiche trouvée : {nomComplet(liens[m.uid])}
@@ -105,6 +167,43 @@ export default function AdminPage() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+      {isAdmin && loaded && entAttente.length > 0 && (
+        <div className="mt-6">
+          <h2 className="mb-3 font-display text-lg font-bold">Entreprises à valider</h2>
+          <div className="space-y-3">
+            {entAttente.map((x) => (
+              <div key={x.id} className="card flex items-center gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <Link href={`/entreprises/${x.id}`} className="font-semibold underline">
+                    {x.nom}
+                  </Link>
+                  <p className="truncate text-sm text-muted">
+                    {[x.categorie, x.type === "recommandation" ? `recommandée par ${x.ownerNom}` : `ajoutée par ${x.ownerNom}`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </div>
+                <button
+                  disabled={busy === x.id}
+                  onClick={() => decideEnt(x.id, false)}
+                  aria-label="Refuser"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted hover:border-brand-red hover:text-brand-red disabled:opacity-50"
+                >
+                  <X size={18} />
+                </button>
+                <button
+                  disabled={busy === x.id}
+                  onClick={() => decideEnt(x.id, true)}
+                  aria-label="Publier"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500 text-ink hover:bg-gold-600 disabled:opacity-50"
+                >
+                  <Check size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </AppShell>

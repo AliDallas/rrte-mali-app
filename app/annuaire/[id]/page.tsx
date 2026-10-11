@@ -49,10 +49,17 @@ export default function FicheDetailPage() {
       {state === "ok" && fiche && (
         <div className="space-y-4">
           <div className="card flex flex-col items-center gap-3 p-6 text-center">
-            <Avatar prenom={fiche.prenom || fiche.nom} nom={fiche.prenom ? fiche.nom : ""} size={72} />
+            {fiche.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={fiche.logo} alt="Logo" className="h-20 w-20 rounded-2xl object-cover" />
+            ) : (
+              <Avatar prenom={fiche.prenom || fiche.nom} nom={fiche.prenom ? fiche.nom : ""} size={72} />
+            )}
             <div>
               <p className="font-display text-xl font-bold">{nomComplet(fiche)}</p>
-              {fiche.ville && <p className="text-sm text-muted">{fiche.ville}</p>}
+              {(fiche.ville || fiche.pays) && (
+                <p className="text-sm text-muted">{[fiche.ville, fiche.pays].filter(Boolean).join(" · ")}</p>
+              )}
             </div>
             {fiche.aConfirmer && (
               <span className="rounded-full bg-gold-100 px-3 py-1 text-xs font-semibold text-gold-700">
@@ -95,10 +102,11 @@ export default function FicheDetailPage() {
 
           <div className="card space-y-4 p-5">
             <Bloc titre="Activité" texte={fiche.activite} />
+            <Bloc titre="Entreprise ou projet" texte={fiche.presentation} />
             <Bloc titre="Compétences" texte={fiche.competences} />
             <Bloc titre="Au Mali depuis" texte={fiche.anciennete} />
             <Bloc titre="Réseaux" texte={fiche.reseaux} />
-            <Bloc titre="Attentes du groupe" texte={fiche.attentes} />
+            <Bloc titre="Objectif, besoin, centre d’intérêt" texte={fiche.attentes} />
             <Bloc titre="Informations" texte={fiche.info} />
             {!fiche.activite && !fiche.competences && !fiche.anciennete && !fiche.attentes && (
               <p className="text-sm text-muted">Ce membre n’a pas encore complété sa fiche.</p>

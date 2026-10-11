@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import BrandStrip from "@/components/BrandStrip";
+import { reduireImage } from "@/lib/image";
+import EntrepriseForm from "@/components/EntrepriseForm";
+import { EntrepriseSaisie, saisieVide } from "@/lib/entreprises";
 
 export default function SignupPage() {
   const { signup } = useAuth();
@@ -13,16 +16,50 @@ export default function SignupPage() {
   const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [reseaux, setReseaux] = useState("");
+  const [pays, setPays] = useState("");
+  const [quartier, setQuartier] = useState("");
+  const [anneeRetour, setAnneeRetour] = useState("");
+  const [activite, setActivite] = useState("");
+  const [presentation, setPresentation] = useState("");
+  const [logo, setLogo] = useState("");
+  const [competences, setCompetences] = useState("");
+  const [objectif, setObjectif] = useState("");
+  const [entreprises, setEntreprises] = useState<EntrepriseSaisie[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  async function choisirLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      setLogo(await reduireImage(f));
+    } catch {
+      setError("Image illisible, essayez un autre fichier.");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (JSON.stringify([logo, entreprises]).length > 800000) {
+      setError("Les photos sont trop lourdes : retirez-en quelques-unes (vous pourrez les ajouter ensuite dans l’application).");
+      return;
+    }
     setLoading(true);
     try {
-      await signup(email, password, nom, prenom, telephone);
+      await signup(email, password, nom.trim(), prenom.trim(), telephone.trim(), {
+        reseaux: reseaux.trim(),
+        pays: pays.trim(),
+        quartier: quartier.trim(),
+        anneeRetour: anneeRetour.trim(),
+        activite: activite.trim(),
+        presentation: presentation.trim(),
+        logo,
+        competences: competences.trim(),
+        objectif: objectif.trim(),
+      }, entreprises.filter((x) => x.nom.trim()));
       setSuccess(true);
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
@@ -92,6 +129,77 @@ export default function SignupPage() {
           Adresse e-mail
           <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="field-dark mt-1.5" />
         </label>
+        <label className="block text-sm text-ink-mute">
+          Réseaux sociaux (Facebook, Instagram…)
+          <input value={reseaux} onChange={(e) => setReseaux(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block text-sm text-ink-mute">
+            Pays de résidence principale
+            <input required value={pays} onChange={(e) => setPays(e.target.value)} className="field-dark mt-1.5" />
+          </label>
+          <label className="block text-sm text-ink-mute">
+            Année de retour au Mali
+            <input inputMode="numeric" placeholder="ex. 2018" value={anneeRetour} onChange={(e) => setAnneeRetour(e.target.value)} className="field-dark mt-1.5" />
+          </label>
+        </div>
+        <label className="block text-sm text-ink-mute">
+          Quartier de résidence au Mali
+          <input value={quartier} onChange={(e) => setQuartier(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Domaine d’activité ou profession
+          <input required value={activite} onChange={(e) => setActivite(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Présentation de votre entreprise ou projet en cours
+          <textarea rows={3} value={presentation} onChange={(e) => setPresentation(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Logo (facultatif)
+          <input type="file" accept="image/*" onChange={choisirLogo} className="mt-1.5 block w-full text-sm" />
+          {logo && <img src={logo} alt="Aperçu du logo" className="mt-2 h-16 w-16 rounded-lg object-cover" />}
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Compétences
+          <textarea rows={2} value={competences} onChange={(e) => setCompetences(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Objectif, besoin, centre d’intérêt
+          <textarea rows={2} value={objectif} onChange={(e) => setObjectif(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <div className="space-y-3 rounded-2xl border border-[#454A50] p-4">
+          <p className="text-sm font-semibold">Vos entreprises (facultatif)</p>
+          <p className="text-xs text-ink-mute">
+            Jusqu’à 5 entreprises, reliées à votre numéro. Vous pourrez compléter les photos et en ajouter ensuite dans l’application.
+          </p>
+          {entreprises.map((ent, i) => (
+            <div key={i} className="space-y-3 border-t border-[#454A50] pt-3">
+              <EntrepriseForm
+                sombre
+                maxPhotos={2}
+                value={ent}
+                onChange={(v) => setEntreprises((l) => l.map((x, j) => (j === i ? v : x)))}
+              />
+              <button
+                type="button"
+                onClick={() => setEntreprises((l) => l.filter((_, j) => j !== i))}
+                className="text-sm text-[#F0897B]"
+              >
+                Retirer cette entreprise
+              </button>
+            </div>
+          ))}
+          {entreprises.length < 5 && (
+            <button
+              type="button"
+              onClick={() => setEntreprises((l) => [...l, saisieVide("proprietaire")])}
+              className="btn-outline"
+            >
+              + Ajouter une entreprise
+            </button>
+          )}
+        </div>
         <label className="block text-sm text-ink-mute">
           Mot de passe
           <input type="password" required minLength={6} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="field-dark mt-1.5" />
