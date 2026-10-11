@@ -24,6 +24,7 @@ export default function ModifierFichePage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [lien, setLien] = useState(false);
+  const [numero, setNumero] = useState("");
 
   async function charger() {
     if (!user) return;
@@ -87,13 +88,16 @@ export default function ModifierFichePage() {
 
   // réservé aux administrateurs : relie leur compte à la fiche portant leur numéro
   async function relier() {
-    if (!user || !profile?.telephone) return setMsg("Aucun numéro de téléphone sur votre compte.");
+    const k = cle(numero || profile?.telephone || "");
+    if (!user || k.length < 8) return setMsg("Entrez votre numéro de téléphone (8 chiffres au minimum).");
     setLien(true);
+    setMsg("");
     try {
-      const r = await getDocs(query(collection(db, "fiches"), where("cles", "array-contains", cle(profile.telephone))));
-      if (r.empty) setMsg("Aucune fiche avec votre numéro dans l’annuaire.");
+      const r = await getDocs(query(collection(db, "fiches"), where("cles", "array-contains", k)));
+      if (r.empty) setMsg("Aucune fiche avec ce numéro dans l’annuaire.");
       else {
         await updateDoc(doc(db, "fiches", r.docs[0].id), { uid: user.uid });
+        await updateDoc(doc(db, "users", user.uid), { telephone: numero.trim() || profile?.telephone || "" });
         await charger();
       }
     } catch {
@@ -126,9 +130,18 @@ export default function ModifierFichePage() {
             Votre compte n’est pas encore relié à une fiche de l’annuaire. Contactez un administrateur RRTE.
           </p>
           {profile?.role === "admin" && (
-            <button onClick={relier} disabled={lien} className="btn-gold">
-              Relier ma fiche (par mon numéro)
-            </button>
+            <>
+              <input
+                type="tel"
+                value={numero}
+                onChange={(e) => setNumero(e.target.value)}
+                placeholder="Votre numéro (celui de l’annuaire)"
+                className={input}
+              />
+              <button onClick={relier} disabled={lien} className="btn-gold">
+                Relier ma fiche
+              </button>
+            </>
           )}
           {msg && <p className="text-sm text-brand-red">{msg}</p>}
         </div>

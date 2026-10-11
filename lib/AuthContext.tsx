@@ -47,9 +47,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        try {
+          const c = localStorage.getItem(`rrte-profil-${firebaseUser.uid}`);
+          if (c) {
+            setProfile(JSON.parse(c) as MemberProfile);
+            setLoading(false);
+          }
+        } catch {
+          /* cache indisponible : on attend le serveur */
+        }
         const snap = await getDoc(doc(db, "users", firebaseUser.uid));
         if (snap.exists()) {
-          setProfile(snap.data() as MemberProfile);
+          const p = snap.data() as MemberProfile;
+          setProfile(p);
+          try {
+            const { fiche, entreprises, ...leger } = p;
+            void fiche;
+            void entreprises;
+            localStorage.setItem(`rrte-profil-${firebaseUser.uid}`, JSON.stringify(leger));
+          } catch {
+            /* ignoré */
+          }
         }
       } else {
         setProfile(null);
