@@ -2,23 +2,34 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { collection, getCountFromServer, query, where } from "firebase/firestore";
-import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck } from "lucide-react";
+import { collection, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
+import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
+import Avatar from "@/components/Avatar";
+import { Fiche, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
 
 export default function AccueilPage() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === "admin";
   const [pending, setPending] = useState<number | null>(null);
   const [actifs, setActifs] = useState<number | null>(null);
+  const [nouveaux, setNouveaux] = useState<Fiche[]>([]);
+  const [recents, setRecents] = useState<Fiche[]>([]);
 
   useEffect(() => {
     if (!profile || profile.statut !== "actif") return;
     getCountFromServer(query(collection(db, "users"), where("statut", "==", "actif")))
       .then((s) => setActifs(s.data().count))
       .catch(() => setActifs(null));
+    const mois = Date.now() - 30 * 24 * 3600 * 1000;
+    getDocs(query(collection(db, "fiches"), orderBy("inscritLe", "desc"), limit(8)))
+      .then((r) => setNouveaux(r.docs.map((d) => ficheDepuisDoc(d.id, d.data())).filter((f) => f.inscritLe > mois)))
+      .catch(() => undefined);
+    getDocs(query(collection(db, "fiches"), orderBy("majLe", "desc"), limit(8)))
+      .then((r) => setRecents(r.docs.map((d) => ficheDepuisDoc(d.id, d.data())).filter((f) => f.majLe > mois)))
+      .catch(() => undefined);
     if (isAdmin) {
       getCountFromServer(query(collection(db, "users"), where("statut", "==", "en_attente")))
         .then((s) => setPending(s.data().count))
@@ -27,6 +38,7 @@ export default function AccueilPage() {
   }, [profile, isAdmin]);
 
   const tiles = [
+    { href: "/demandes", label: "Demandes", hint: "Je cherche · Je propose", Icon: HandHelping },
     { href: "/annuaire", label: "Membres", hint: actifs !== null ? `${actifs} inscrits dans l’application` : "Annuaire", Icon: Users },
     { href: "/entreprises", label: "Entreprises", hint: "Les activités de la communauté", Icon: Briefcase },
     { href: "/restaurants", label: "Restaurants", hint: "Menus et réservations", Icon: Utensils },
@@ -49,6 +61,25 @@ export default function AccueilPage() {
           </div>
           <ChevronRight size={18} className="text-ink-mute" />
         </Link>
+      )}
+      {[
+        { titre: "Nouveaux membres", liste: nouveaux },
+        { titre: "Fiches mises à jour récemment", liste: recents },
+      ].map(
+        ({ titre, liste }) =>
+          liste.length > 0 && (
+            <div key={titre} className="mb-5">
+              <h2 className="mb-2 font-display text-lg font-bold">{titre}</h2>
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {liste.map((f) => (
+                  <Link key={f.id} href={`/annuaire/${f.id}`} className="card flex w-24 flex-none flex-col items-center gap-1 p-3 text-center">
+                    <Avatar prenom={f.prenom || f.nom} nom={f.prenom ? f.nom : ""} size={44} photo={f.photo} />
+                    <p className="line-clamp-2 text-xs font-semibold">{nomComplet(f)}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ),
       )}
       <div className="space-y-3">
         {tiles.map(({ href, label, hint, Icon }) => (

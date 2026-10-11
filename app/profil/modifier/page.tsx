@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Fiche, cle, ficheDepuisDoc } from "@/lib/fiches";
 import { reduireImage } from "@/lib/image";
 import { viderCache } from "@/lib/cache";
+import { TAGS } from "@/lib/tags";
 
 const input =
   "mt-1.5 w-full rounded-2xl border border-line bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold-500";
@@ -23,6 +24,7 @@ export default function ModifierFichePage() {
   const [f, setF] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [lien, setLien] = useState(false);
   const [numero, setNumero] = useState("");
 
@@ -45,9 +47,12 @@ export default function ModifierFichePage() {
       competences: x.competences,
       attentes: x.attentes,
       info: x.info,
+      cherche: x.cherche,
+      propose: x.propose,
       logo: x.logo,
       photo: x.photo,
     });
+    setTags(x.tags);
     setState("ok");
   }
 
@@ -86,12 +91,13 @@ export default function ModifierFichePage() {
     setSaving(true);
     setMsg("");
     try {
-      const data: Record<string, string | boolean> = { aConfirmer: false };
+      const data: Record<string, string | boolean | number | string[]> = { aConfirmer: false, tags, majLe: Date.now() };
       for (const [k, v] of Object.entries(f)) data[k] = v.trim();
+      data.photo = String(data.photo ?? "");
       if (data.activite || data.competences) data.statutFiche = "Fiche complète";
       await updateDoc(doc(db, "fiches", fiche.id), data);
       viderCache("annuaire");
-      if (user) await updateDoc(doc(db, "users", user.uid), { photo: data.photo ?? "" });
+      if (user) await updateDoc(doc(db, "users", user.uid), { photo: String(data.photo ?? "") });
       await refreshProfile();
       router.push(`/annuaire/${fiche.id}`);
     } catch {
@@ -178,6 +184,26 @@ export default function ModifierFichePage() {
             {champ("presentation", "Présentation de votre entreprise ou projet", { area: true })}
             {champ("competences", "Compétences", { area: true })}
             {champ("attentes", "Objectif, besoin, centre d’intérêt", { area: true })}
+            {champ("cherche", "Je cherche…", { placeholder: "ex. un maçon, un local à louer, un associé" })}
+            {champ("propose", "Je propose…", { placeholder: "ex. comptabilité, livraison, formation" })}
+            <div className="text-sm font-medium">
+              Mes domaines
+              <div className="mt-2 flex flex-wrap gap-2">
+                {TAGS.map((t) => {
+                  const on = tags.includes(t);
+                  return (
+                    <button
+                      type="button"
+                      key={t}
+                      onClick={() => setTags((l) => (on ? l.filter((x) => x !== t) : [...l, t]))}
+                      className={`rounded-full border px-3 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             {champ("info", "Informations complémentaires", { area: true })}
             <div className="text-sm font-medium">
               Photo de profil

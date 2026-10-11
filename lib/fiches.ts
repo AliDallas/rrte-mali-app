@@ -20,6 +20,11 @@ export interface Fiche {
   photo: string;
   admin: boolean;
   uid: string | null;
+  cherche: string;
+  propose: string;
+  tags: string[];
+  majLe: number;
+  inscritLe: number;
 }
 
 /** Réponses du questionnaire saisies à l'inscription. */
@@ -74,6 +79,11 @@ export function ficheDepuisDoc(id: string, x: Record<string, unknown>): Fiche {
     photo: s(x.photo),
     admin: x.admin === true,
     uid: typeof x.uid === "string" ? x.uid : null,
+    cherche: s(x.cherche),
+    propose: s(x.propose),
+    tags: Array.isArray(x.tags) ? (x.tags as string[]).filter((t) => typeof t === "string") : [],
+    majLe: typeof x.majLe === "number" ? x.majLe : 0,
+    inscritLe: typeof x.inscritLe === "number" ? x.inscritLe : 0,
   };
 }
 

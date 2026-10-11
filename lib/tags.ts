@@ -1,0 +1,21 @@
+/** Domaines proposés à l'étiquetage des compétences (liste commune pour des recherches fiables). */
+export const TAGS = [
+  "Bâtiment & construction",
+  "Immobilier",
+  "Santé & bien-être",
+  "Éducation & formation",
+  "Informatique & numérique",
+  "Commerce & import-export",
+  "Restauration & alimentation",
+  "Agriculture & élevage",
+  "Transport & logistique",
+  "Finance & comptabilité",
+  "Droit & administration",
+  "Communication & marketing",
+  "Mode & beauté",
+  "Artisanat",
+  "Énergie & environnement",
+  "Événementiel",
+  "Industrie",
+  "Autre",
+];

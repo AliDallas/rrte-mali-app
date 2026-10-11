@@ -9,7 +9,7 @@ import {
   Home,
   Users,
   Briefcase,
-  CalendarDays,
+  HandHelping,
   User,
   Utensils,
   ThumbsUp,
@@ -24,7 +24,7 @@ const MEMBER_NAV = [
   { href: "/annuaire", label: "Membres", Icon: Users },
   { href: "/entreprises", label: "Entreprises", Icon: Briefcase },
   { href: "/prestataires", label: "Recommandés", Icon: ThumbsUp },
-  { href: "/evenements", label: "Événements", Icon: CalendarDays },
+  { href: "/demandes", label: "Demandes", Icon: HandHelping },
   { href: "/profil", label: "Profil", Icon: User },
 ];
 

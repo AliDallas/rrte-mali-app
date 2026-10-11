@@ -113,6 +113,22 @@ export default function FicheDetailPage() {
             )}
           </div>
 
+          {(fiche.cherche || fiche.propose || fiche.tags.length > 0) && (
+            <div className="card space-y-4 p-5">
+              <Bloc titre="Je cherche" texte={fiche.cherche} />
+              <Bloc titre="Je propose" texte={fiche.propose} />
+              {fiche.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {fiche.tags.map((t) => (
+                    <span key={t} className="rounded-full bg-gold-100 px-3 py-1 text-xs font-semibold text-gold-700">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="card space-y-4 p-5">
             <Bloc titre="Activité" texte={fiche.activite} />
             <Bloc titre="Entreprise ou projet" texte={fiche.presentation} />

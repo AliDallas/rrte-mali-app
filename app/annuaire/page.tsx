@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { Search } from "lucide-react";
+import { MessageCircle, Phone, Search } from "lucide-react";
+import { TAGS } from "@/lib/tags";
 import Badges from "@/components/Badges";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { Fiche, ficheDepuisDoc, ficheIncomplete, nomComplet } from "@/lib/fiches";
+import { Fiche, chiffres, ficheDepuisDoc, ficheIncomplete, nomComplet } from "@/lib/fiches";
 import { ecrireCache, lireCache } from "@/lib/cache";
 
 function norm(s: string) {
@@ -27,6 +28,9 @@ export default function AnnuairePage() {
   const [seulEnt, setSeulEnt] = useState(false);
   const [seulIncomplet, setSeulIncomplet] = useState(false);
   const [seulAdmin, setSeulAdmin] = useState(false);
+  const [tag, setTag] = useState("");
+  const [seulCherche, setSeulCherche] = useState(false);
+  const [seulPropose, setSeulPropose] = useState(false);
   const [compte, setCompte] = useState<"" | "avec" | "sans">("");
 
   useEffect(() => {
@@ -82,16 +86,19 @@ export default function AnnuairePage() {
       if (seulEnt && !(f.uid && avecEnt.has(f.uid))) return false;
       if (seulIncomplet && !ficheIncomplete(f)) return false;
       if (seulAdmin && !f.admin) return false;
+      if (tag && !f.tags.includes(tag)) return false;
+      if (seulCherche && !f.cherche.trim()) return false;
+      if (seulPropose && !f.propose.trim()) return false;
       if (compte === "avec" && !f.uid) return false;
       if (compte === "sans" && f.uid) return false;
-      return !s || norm(`${f.prenom} ${f.nom} ${f.activite} ${f.competences} ${f.ville} ${f.presentation}`).includes(s);
+      return !s || norm(`${f.prenom} ${f.nom} ${f.activite} ${f.competences} ${f.ville} ${f.presentation} ${f.cherche} ${f.propose} ${f.tags.join(" ")}`).includes(s);
     });
-  }, [fiches, q, quartier, pays, seulEnt, seulIncomplet, seulAdmin, compte, avecEnt]);
+  }, [fiches, q, quartier, pays, seulEnt, seulIncomplet, seulAdmin, compte, tag, seulCherche, seulPropose, avecEnt]);
 
   const chip = (on: boolean) =>
     `flex-none rounded-full border px-3.5 py-1.5 text-sm ${on ? "border-gold-500 bg-gold-500 font-semibold text-ink" : "border-line bg-white text-muted"}`;
   const nbComptes = fiches.filter((f) => f.uid).length;
-  const filtresActifs = !!(compte || quartier || pays || seulEnt || seulIncomplet || seulAdmin);
+  const filtresActifs = !!(tag || seulCherche || seulPropose || compte || quartier || pays || seulEnt || seulIncomplet || seulAdmin);
 
   return (
     <AppShell
@@ -131,6 +138,20 @@ export default function AnnuairePage() {
             </option>
           ))}
         </select>
+        <select value={tag} onChange={(e) => setTag(e.target.value)} className={chip(!!tag)}>
+          <option value="">Domaine</option>
+          {TAGS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <button onClick={() => setSeulCherche((v) => !v)} className={chip(seulCherche)}>
+          Cherche
+        </button>
+        <button onClick={() => setSeulPropose((v) => !v)} className={chip(seulPropose)}>
+          Propose
+        </button>
         <button onClick={() => setCompte((v) => (v === "avec" ? "" : "avec"))} className={chip(compte === "avec")}>
           Compte créé
         </button>
@@ -155,6 +176,9 @@ export default function AnnuairePage() {
               setSeulIncomplet(false);
               setSeulAdmin(false);
               setCompte("");
+              setTag("");
+              setSeulCherche(false);
+              setSeulPropose(false);
             }}
             className="flex-none text-sm font-semibold text-brand-red"
           >
@@ -171,20 +195,47 @@ export default function AnnuairePage() {
 
       <div className="grid grid-cols-2 gap-3">
         {filtered.map((f) => (
-          <Link key={f.id} href={`/annuaire/${f.id}`} className={`card flex flex-col items-center gap-1 px-3 py-5 text-center ${f.uid ? "border-2 border-emerald-500 bg-emerald-50" : "border border-dashed border-line opacity-90"}`}>
-            <Avatar prenom={f.prenom || f.nom} nom={f.prenom ? f.nom : ""} size={56} photo={f.photo} />
-            <p className="mt-1 text-sm font-semibold">{nomComplet(f)}</p>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${f.uid ? "bg-emerald-600 text-white" : "bg-gray-200 text-muted"}`}>
-              {f.uid ? "Compte créé" : "Pas encore inscrit"}
-            </span>
-            {f.admin && <Badges admin compact />}
-            {f.activite && <p className="line-clamp-2 text-xs text-muted">{f.activite}</p>}
-            {ficheIncomplete(f) && (
-              <span className="mt-1 rounded-full bg-brand-red/10 px-2 py-0.5 text-[10px] font-semibold text-brand-red">
-                Fiche à compléter
+          <div
+            key={f.id}
+            className={`card flex flex-col ${f.uid ? "border-2 border-emerald-500 bg-emerald-50" : "border border-dashed border-line opacity-90"}`}
+          >
+            <Link href={`/annuaire/${f.id}`} className="flex flex-1 flex-col items-center gap-1 px-3 pb-2 pt-5 text-center">
+              <Avatar prenom={f.prenom || f.nom} nom={f.prenom ? f.nom : ""} size={56} photo={f.photo} />
+              <p className="mt-1 text-sm font-semibold">{nomComplet(f)}</p>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${f.uid ? "bg-emerald-600 text-white" : "bg-gray-200 text-muted"}`}>
+                {f.uid ? "Compte créé" : "Pas encore inscrit"}
               </span>
+              {f.admin && <Badges admin compact />}
+              {f.activite && <p className="line-clamp-2 text-xs text-muted">{f.activite}</p>}
+              {f.cherche && <p className="line-clamp-2 text-xs"><span className="font-semibold text-gold-700">Cherche :</span> {f.cherche}</p>}
+              {f.propose && <p className="line-clamp-2 text-xs"><span className="font-semibold text-gold-700">Propose :</span> {f.propose}</p>}
+              {ficheIncomplete(f) && (
+                <span className="mt-1 rounded-full bg-brand-red/10 px-2 py-0.5 text-[10px] font-semibold text-brand-red">
+                  Fiche à compléter
+                </span>
+              )}
+            </Link>
+            {f.tels[0] && (
+              <div className="flex gap-2 px-3 pb-3 pt-1">
+                <a
+                  href={`tel:${f.tels[0]}`}
+                  aria-label="Appeler"
+                  className="flex flex-1 items-center justify-center gap-1 rounded-full border border-line bg-white py-1.5 text-xs font-semibold"
+                >
+                  <Phone size={14} /> Appeler
+                </a>
+                <a
+                  href={`https://wa.me/${chiffres(f.tels[0])}?text=${encodeURIComponent("Salam, je te contacte via l’application RRTE.")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp"
+                  className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gold-500 text-ink"
+                >
+                  <MessageCircle size={15} />
+                </a>
+              </div>
             )}
-          </Link>
+          </div>
         ))}
       </div>
     </AppShell>

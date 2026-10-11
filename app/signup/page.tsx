@@ -153,7 +153,7 @@ export default function SignupPage() {
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm text-ink-mute">
             Pays de résidence principale
-            <input required value={pays} onChange={(e) => setPays(e.target.value)} className="field-dark mt-1.5" />
+            <input value={pays} onChange={(e) => setPays(e.target.value)} className="field-dark mt-1.5" />
           </label>
           <label className="block text-sm text-ink-mute">
             Année de retour au Mali
@@ -166,7 +166,7 @@ export default function SignupPage() {
         </label>
         <label className="block text-sm text-ink-mute">
           Domaine d’activité ou profession
-          <input required value={activite} onChange={(e) => setActivite(e.target.value)} className="field-dark mt-1.5" />
+          <input value={activite} onChange={(e) => setActivite(e.target.value)} className="field-dark mt-1.5" />
         </label>
         <label className="block text-sm text-ink-mute">
           Présentation de votre entreprise ou projet en cours

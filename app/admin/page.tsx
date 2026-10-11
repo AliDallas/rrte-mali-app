@@ -53,7 +53,7 @@ export default function AdminPage() {
         // la fiche saisie à l'inscription alimente l'annuaire (sans créer de doublon)
         const f = m.fiche;
         const tel = m.telephone || "";
-        const donnees: Record<string, unknown> = { uid, email: m.email, statutFiche: "Fiche complète", aConfirmer: false };
+        const donnees: Record<string, unknown> = { uid, email: m.email, statutFiche: "Fiche complète", aConfirmer: false, inscritLe: Date.now() };
         const mettre = (k: string, v?: string) => {
           if (v && v.trim()) donnees[k] = v.trim();
         };
