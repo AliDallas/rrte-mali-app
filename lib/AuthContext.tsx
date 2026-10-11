@@ -33,6 +33,7 @@ interface AuthContextType {
   user: User | null;
   profile: MemberProfile | null;
   loading: boolean;
+  profilFrais: boolean;
   signup: (email: string, password: string, nom: string, prenom: string, telephone: string, fiche: FicheSaisie, entreprises: EntrepriseSaisie[]) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -45,10 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // vrai quand le profil vient du serveur (et non seulement de la copie gardée sur l'appareil)
+  const [profilFrais, setProfilFrais] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      setProfilFrais(false);
       if (firebaseUser) {
         try {
           const c = localStorage.getItem(`rrte-profil-${firebaseUser.uid}`);
@@ -63,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (snap.exists()) {
           const p = snap.data() as MemberProfile;
           setProfile(p);
+          setProfilFrais(true);
           try {
             const { fiche, entreprises, ...leger } = p;
             void fiche;
@@ -109,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (snap.exists()) {
       const p = snap.data() as MemberProfile;
       setProfile(p);
+      setProfilFrais(true);
       try {
         const { fiche, entreprises, ...leger } = p;
         void fiche;
@@ -125,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signup, login, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, profilFrais, signup, login, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

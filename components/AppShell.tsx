@@ -49,7 +49,7 @@ export default function AppShell({
   children: ReactNode;
   requireAuth?: boolean;
 }) {
-  const { user, profile, loading, logout, refreshProfile } = useAuth();
+  const { user, profile, loading, profilFrais, logout, refreshProfile } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -57,10 +57,11 @@ export default function AppShell({
   const [reglementOk, setReglementOk] = useState(reglementAccepteSession);
   const [accepteOk, setAccepteOk] = useState(false);
   const [envoi, setEnvoi] = useState(false);
+  const [erreurReglement, setErreurReglement] = useState("");
   // le règlement a été mis à jour : les membres qui l'ont accepté avant cette date doivent le ré-accepter
   const REGLEMENT_VERSION = Date.UTC(2026, 9, 12);
   const doitAccepter =
-    !!user && profile?.statut === "actif" && requireAuth && !reglementOk && (profile.reglementAccepteLe ?? 0) < REGLEMENT_VERSION;
+    !!user && profilFrais && profile?.statut === "actif" && requireAuth && !reglementOk && (profile.reglementAccepteLe ?? 0) < REGLEMENT_VERSION;
 
   async function accepterReglement() {
     if (!user) return;
@@ -71,7 +72,7 @@ export default function AppShell({
       setReglementOk(true);
       await refreshProfile().catch(() => undefined);
     } catch {
-      /* réessayer */
+      setErreurReglement("Impossible d’enregistrer pour le moment. Vérifiez votre connexion et réessayez.");
     } finally {
       setEnvoi(false);
     }
@@ -159,6 +160,7 @@ export default function AppShell({
             <input type="checkbox" checked={accepteOk} onChange={(e) => setAccepteOk(e.target.checked)} className="mt-1" />
             <span>J’ai lu et j’accepte le règlement du groupe.</span>
           </label>
+          {erreurReglement && <p className="text-sm text-[#F0897B]">{erreurReglement}</p>}
           <button className="btn-gold" disabled={!accepteOk || envoi} onClick={accepterReglement}>
             {envoi ? "Enregistrement..." : "Continuer"}
           </button>
