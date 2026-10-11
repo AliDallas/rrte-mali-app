@@ -40,7 +40,7 @@ export function texteBienvenue(d: DonneesPresentation): string {
     .filter(([, v]) => v && v.trim())
     .map(([k, v]) => `${k} : ${v.trim()}`)
     .join("\n");
-  return `Salam aleykoum 👋\n\nBienvenue à *${nom}* dans le groupe RRTE 🇲🇱\n\nVoici sa présentation :\n\n${corps}\n\nN’hésitez pas à lui souhaiter la bienvenue et à créer des connexions utiles 🤝`;
+  return `Salam aleykoum 👋\n\nBienvenue à *${nom}* dans le groupe RRTE 🇲🇱\n\nVoici sa présentation :\n\n${corps}\n\n${d.prenom ? `${d.prenom}, si` : "Si"} tu le souhaites, tu peux nous faire une petite présentation de toi et de tes activités au Mali 🇲🇱\n\nCela permettra à chacun de mieux te connaître et de créer des connexions utiles 🤝\n\nEncore bienvenue parmi nous 🙏`;
 }
 
 type Membre = { prenom: string; nom: string; email: string; telephone?: string; fiche?: FicheSaisie };
