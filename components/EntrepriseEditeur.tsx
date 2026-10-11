@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addDoc, collection, doc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { viderCache } from "@/lib/cache";
 import EntrepriseForm from "./EntrepriseForm";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { EntrepriseSaisie, saisieVersDoc } from "@/lib/entreprises";
+import { EntrepriseSaisie, enregistrerPhotos, saisieVersDoc } from "@/lib/entreprises";
 
 export default function EntrepriseEditeur({ id, initial }: { id?: string; initial: EntrepriseSaisie }) {
   const { user, profile } = useAuth();
@@ -23,13 +24,16 @@ export default function EntrepriseEditeur({ id, initial }: { id?: string; initia
     setError("");
     try {
       const data = saisieVersDoc(f);
-      if (JSON.stringify(data).length > 850000) throw new Error("taille");
+      if (JSON.stringify(f.photos).length > 900000) throw new Error("taille");
       if (!id && !isAdmin) {
         const mine = await getDocs(query(collection(db, "entreprises"), where("ownerUid", "==", user.uid)));
         if (mine.size >= 5) throw new Error("max");
       }
       if (id) {
         await updateDoc(doc(db, "entreprises", id), { ...data, updatedAt: serverTimestamp() });
+        const vignette = await enregistrerPhotos(id, f.photos);
+        await updateDoc(doc(db, "entreprises", id), { vignette });
+        viderCache("entreprises");
         router.push(`/entreprises/${id}`);
       } else {
         const ref = await addDoc(collection(db, "entreprises"), {
@@ -39,6 +43,9 @@ export default function EntrepriseEditeur({ id, initial }: { id?: string; initia
           statut: "publie",
           createdAt: serverTimestamp(),
         });
+        const vignette = await enregistrerPhotos(ref.id, f.photos);
+        await updateDoc(ref, { vignette });
+        viderCache("entreprises");
         router.push(`/entreprises/${ref.id}`);
       }
     } catch (err) {

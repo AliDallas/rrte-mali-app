@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { METIERS } from "@/lib/prestataires";
+import { viderCache } from "@/lib/cache";
 
 const input =
   "mt-1.5 w-full rounded-2xl border border-line bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold-500";
@@ -40,6 +41,7 @@ export default function NouveauPrestatairePage() {
         sommeNotes: 0,
         createdAt: serverTimestamp(),
       });
+      viderCache("prestataires");
       router.push(`/prestataires/${ref.id}`);
     } catch {
       setError("Impossible d’enregistrer. Réessayez dans un instant.");

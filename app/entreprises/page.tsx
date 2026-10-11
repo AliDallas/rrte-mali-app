@@ -8,6 +8,7 @@ import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { CATEGORIES, Entreprise, entrepriseDepuisDoc } from "@/lib/entreprises";
+import { ecrireCache, lireCache } from "@/lib/cache";
 
 export default function EntreprisesPage() {
   const { user, profile } = useAuth();
@@ -20,13 +21,23 @@ export default function EntreprisesPage() {
 
   useEffect(() => {
     if (!user || profile?.statut !== "actif") return;
+    const c = lireCache<[Entreprise[], Entreprise[]]>(`entreprises-${user.uid}`);
+    if (c) {
+      setListe(c[0]);
+      setMes(c[1]);
+      setLoaded(true);
+      return;
+    }
     Promise.all([
       getDocs(query(collection(db, "entreprises"), where("statut", "==", "publie"))),
       getDocs(query(collection(db, "entreprises"), where("ownerUid", "==", user.uid))),
     ])
       .then(([a, b]) => {
-        setListe(a.docs.map((d) => entrepriseDepuisDoc(d.id, d.data())));
-        setMes(b.docs.map((d) => entrepriseDepuisDoc(d.id, d.data())));
+        const l = a.docs.map((d) => entrepriseDepuisDoc(d.id, d.data()));
+        const m = b.docs.map((d) => entrepriseDepuisDoc(d.id, d.data()));
+        setListe(l);
+        setMes(m);
+        ecrireCache(`entreprises-${user.uid}`, [l, m]);
       })
       .catch(() => undefined)
       .finally(() => setLoaded(true));
@@ -104,9 +115,9 @@ export default function EntreprisesPage() {
       <div className="space-y-3">
         {shown.map((e) => (
           <Link key={e.id} href={`/entreprises/${e.id}`} className="card flex items-center gap-4 p-4">
-            {e.logo || e.photos[0] ? (
+            {e.logo || e.vignette || e.photos[0] ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={e.logo || e.photos[0]} alt="" className="h-16 w-16 flex-none rounded-xl object-cover" />
+              <img src={e.logo || e.vignette || e.photos[0]} alt="" className="h-16 w-16 flex-none rounded-xl object-cover" />
             ) : (
               <div className="flex h-16 w-16 flex-none items-center justify-center rounded-xl bg-gold-100 text-gold-700">
                 <Briefcase size={24} strokeWidth={1.75} />

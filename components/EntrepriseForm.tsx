@@ -44,7 +44,7 @@ export default function EntrepriseForm({
     e.target.value = "";
     if (!f) return;
     try {
-      onChange({ ...value, logo: await reduireImage(f, 256) });
+      onChange({ ...value, logo: await reduireImage(f, 160, 0.75) });
     } catch {
       setErr("Image illisible, essayez un autre fichier.");
     }

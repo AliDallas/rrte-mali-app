@@ -57,6 +57,13 @@ service cloud.firestore {
         resource.data.ownerUid == request.auth.uid &&
         request.resource.data.ownerUid == resource.data.ownerUid);
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+
+      // photos de l'entreprise, rangées à part pour garder les listes légères
+      match /medias/{mediaId} {
+        allow read: if isActiveMember();
+        allow write: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/entreprises/$(entId)).data.ownerUid == request.auth.uid);
+      }
     }
 
     // Prestataires recommandés (coiffeur, couturier, plombier…) avec notes et commentaires

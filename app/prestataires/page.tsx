@@ -9,6 +9,7 @@ import Etoiles from "@/components/Etoiles";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { METIERS, Prestataire, moyenne, prestataireDepuisDoc } from "@/lib/prestataires";
+import { ecrireCache, lireCache } from "@/lib/cache";
 
 export default function PrestatairesPage() {
   const { profile } = useAuth();
@@ -19,8 +20,18 @@ export default function PrestatairesPage() {
 
   useEffect(() => {
     if (profile?.statut !== "actif") return;
+    const c = lireCache<Prestataire[]>("prestataires");
+    if (c) {
+      setListe(c);
+      setLoaded(true);
+      return;
+    }
     getDocs(collection(db, "prestataires"))
-      .then((r) => setListe(r.docs.map((d) => prestataireDepuisDoc(d.id, d.data()))))
+      .then((r) => {
+        const l = r.docs.map((d) => prestataireDepuisDoc(d.id, d.data()));
+        setListe(l);
+        ecrireCache("prestataires", l);
+      })
       .catch(() => undefined)
       .finally(() => setLoaded(true));
   }, [profile]);

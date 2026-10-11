@@ -8,7 +8,8 @@ import { Briefcase, ChevronLeft, Clock, Globe, Mail, MapPin, MessageCircle, Penc
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { Entreprise, entrepriseDepuisDoc, etiquetteLien, lienPropre, videoYoutube } from "@/lib/entreprises";
+import { Entreprise, entrepriseDepuisDoc, etiquetteLien, lienPropre, lirePhotos, videoYoutube } from "@/lib/entreprises";
+import { viderCache } from "@/lib/cache";
 import { chiffres } from "@/lib/fiches";
 
 export default function EntrepriseDetailPage() {
@@ -22,10 +23,13 @@ export default function EntrepriseDetailPage() {
   useEffect(() => {
     if (!id || profile?.statut !== "actif") return;
     getDoc(doc(db, "entreprises", id))
-      .then((s) => {
+      .then(async (s) => {
         if (!s.exists()) return setState("absent");
-        setE(entrepriseDepuisDoc(s.id, s.data()));
+        const x = entrepriseDepuisDoc(s.id, s.data());
+        setE(x);
         setState("ok");
+        const photos = await lirePhotos(s.id, x.photos);
+        setE((cur) => (cur ? { ...cur, photos } : cur));
       })
       .catch(() => setState("absent"));
   }, [id, profile]);
@@ -35,6 +39,7 @@ export default function EntrepriseDetailPage() {
   async function supprimer() {
     if (!id) return;
     await deleteDoc(doc(db, "entreprises", id));
+    viderCache("entreprises");
     router.push("/entreprises");
   }
 

@@ -7,7 +7,7 @@ import AppShell from "@/components/AppShell";
 import EntrepriseEditeur from "@/components/EntrepriseEditeur";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { EntrepriseSaisie, entrepriseDepuisDoc } from "@/lib/entreprises";
+import { EntrepriseSaisie, entrepriseDepuisDoc, lirePhotos } from "@/lib/entreprises";
 
 export default function ModifierEntreprisePage() {
   const id = useParams<{ id: string }>()?.id;
@@ -18,10 +18,11 @@ export default function ModifierEntreprisePage() {
   useEffect(() => {
     if (!id || profile?.statut !== "actif") return;
     getDoc(doc(db, "entreprises", id))
-      .then((s) => {
+      .then(async (s) => {
         if (!s.exists()) return setAbsent(true);
         const e = entrepriseDepuisDoc(s.id, s.data());
-        setInit({ ...e, liens: e.liens.join("\n") });
+        const photos = await lirePhotos(s.id, e.photos);
+        setInit({ ...e, photos, liens: e.liens.join("\n") });
       })
       .catch(() => setAbsent(true));
   }, [id, profile]);

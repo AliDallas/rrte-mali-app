@@ -10,6 +10,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Fiche, cle, ficheDepuisDoc } from "@/lib/fiches";
 import { reduireImage } from "@/lib/image";
+import { viderCache } from "@/lib/cache";
 
 const input =
   "mt-1.5 w-full rounded-2xl border border-line bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold-500";
@@ -60,7 +61,7 @@ export default function ModifierFichePage() {
     e.target.value = "";
     if (!file) return;
     try {
-      set("logo", await reduireImage(file));
+      set("logo", await reduireImage(file, 160, 0.75));
     } catch {
       setMsg("Image illisible, essayez un autre fichier.");
     }
@@ -76,6 +77,7 @@ export default function ModifierFichePage() {
       for (const [k, v] of Object.entries(f)) data[k] = v.trim();
       if (data.activite || data.competences) data.statutFiche = "Fiche complète";
       await updateDoc(doc(db, "fiches", fiche.id), data);
+      viderCache("annuaire");
       router.push(`/annuaire/${fiche.id}`);
     } catch {
       setMsg("Impossible d’enregistrer. Réessayez dans un instant.");

@@ -8,7 +8,8 @@ import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth, MemberProfile } from "@/lib/AuthContext";
-import { Entreprise, entrepriseDepuisDoc, saisieVersDoc } from "@/lib/entreprises";
+import { Entreprise, enregistrerPhotos, entrepriseDepuisDoc, saisieVersDoc } from "@/lib/entreprises";
+import { viderCache } from "@/lib/cache";
 import { chiffres, cle, nomComplet, ficheDepuisDoc, Fiche } from "@/lib/fiches";
 
 export default function AdminPage() {
@@ -26,12 +27,14 @@ export default function AdminPage() {
     setPending(list);
     // rapprochement automatique avec l'annuaire importé, par numéro de téléphone
     const trouves: Record<string, Fiche> = {};
-    for (const m of list) {
-      const k = m.telephone ? cle(m.telephone) : "";
-      if (k.length < 8) continue;
-      const r = await getDocs(query(collection(db, "fiches"), where("cles", "array-contains", k)));
-      if (!r.empty) trouves[m.uid] = ficheDepuisDoc(r.docs[0].id, r.docs[0].data());
-    }
+    await Promise.all(
+      list.map(async (m) => {
+        const k = m.telephone ? cle(m.telephone) : "";
+        if (k.length < 8) return;
+        const r = await getDocs(query(collection(db, "fiches"), where("cles", "array-contains", k)));
+        if (!r.empty) trouves[m.uid] = ficheDepuisDoc(r.docs[0].id, r.docs[0].data());
+      })
+    );
     setLiens(trouves);
     const ents = await getDocs(query(collection(db, "entreprises"), where("statut", "==", "en_attente")));
     setEntAttente(ents.docs.map((d) => entrepriseDepuisDoc(d.id, d.data())));
@@ -62,6 +65,7 @@ export default function AdminPage() {
           mettre("activite", f.activite);
           mettre("presentation", f.presentation);
           mettre("logo", f.logo);
+          viderCache("annuaire");
           mettre("competences", f.competences);
           mettre("attentes", f.objectif);
         }
@@ -81,14 +85,17 @@ export default function AdminPage() {
         // les entreprises saisies à l'inscription sont publiées d'office (l'admin vient de valider la personne)
         for (const ent of m.entreprises) {
           if (!ent.nom?.trim()) continue;
-          await addDoc(collection(db, "entreprises"), {
+          const ref = await addDoc(collection(db, "entreprises"), {
             ...saisieVersDoc(ent),
             ownerUid: uid,
             ownerNom: `${m.prenom} ${m.nom}`.trim(),
             statut: "publie",
             createdAt: serverTimestamp(),
           });
+          const vignette = await enregistrerPhotos(ref.id, ent.photos ?? []);
+          await updateDoc(ref, { vignette });
         }
+        viderCache("entreprises");
       }
       await updateDoc(doc(db, "users", uid), { statut });
       setPending((p) => p.filter((x) => x.uid !== uid));

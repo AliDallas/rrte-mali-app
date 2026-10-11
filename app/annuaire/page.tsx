@@ -9,6 +9,7 @@ import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Fiche, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
+import { ecrireCache, lireCache } from "@/lib/cache";
 
 export default function AnnuairePage() {
   const { profile } = useAuth();
@@ -18,11 +19,18 @@ export default function AnnuairePage() {
 
   useEffect(() => {
     if (!profile || profile.statut !== "actif") return;
+    const c = lireCache<Fiche[]>("annuaire");
+    if (c) {
+      setFiches(c);
+      setLoaded(true);
+      return;
+    }
     getDocs(collection(db, "fiches"))
       .then((snap) => {
         const list = snap.docs.map((d) => ficheDepuisDoc(d.id, d.data()));
         list.sort((a, b) => `${a.nom} ${a.prenom}`.trim().localeCompare(`${b.nom} ${b.prenom}`.trim(), "fr"));
         setFiches(list);
+        ecrireCache("annuaire", list);
       })
       .catch(() => undefined)
       .finally(() => setLoaded(true));

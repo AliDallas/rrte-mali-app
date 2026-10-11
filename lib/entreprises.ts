@@ -32,6 +32,7 @@ export interface EntrepriseSaisie {
 
 export interface Entreprise extends Omit<EntrepriseSaisie, "liens"> {
   id: string;
+  vignette: string;
   liens: string[];
   ownerUid: string;
   ownerNom: string;
@@ -72,7 +73,8 @@ export function entrepriseDepuisDoc(id: string, x: Record<string, unknown>): Ent
     liens: a(x.liens),
     horaires: s(x.horaires),
     logo: s(x.logo),
-    photos: a(x.photos),
+    photos: a(x.photos), // anciennes fiches ; les nouvelles photos sont dans entreprises/{id}/medias/main
+    vignette: s(x.vignette),
     ownerUid: s(x.ownerUid),
     ownerNom: s(x.ownerNom),
     statut: x.statut === "publie" ? "publie" : "en_attente",
@@ -94,7 +96,6 @@ export function saisieVersDoc(f: EntrepriseSaisie) {
     liens: listeLiens(f.liens),
     horaires: f.horaires.trim(),
     logo: f.logo,
-    photos: f.photos,
   };
 }
 
@@ -112,4 +113,24 @@ export function etiquetteLien(url: string): string {
   if (u.includes("wa.me") || u.includes("whatsapp")) return "WhatsApp";
   if (u.includes("linkedin")) return "LinkedIn";
   return url.replace(/^https?:\/\/(www\.)?/i, "").split("/")[0];
+}
+
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "./firebase";
+import { reduireDataUrl } from "./image";
+
+/** Les photos (lourdes) sont rangées à part pour que la liste des entreprises reste légère. */
+export async function enregistrerPhotos(id: string, photos: string[]): Promise<string> {
+  await setDoc(doc(db, "entreprises", id, "medias", "main"), { photos });
+  return photos[0] ? reduireDataUrl(photos[0], 128, 0.7).catch(() => "") : "";
+}
+
+export async function lirePhotos(id: string, anciennes: string[] = []): Promise<string[]> {
+  try {
+    const s = await getDoc(doc(db, "entreprises", id, "medias", "main"));
+    const p = s.exists() ? s.data().photos : null;
+    return Array.isArray(p) ? (p as string[]) : anciennes;
+  } catch {
+    return anciennes;
+  }
 }

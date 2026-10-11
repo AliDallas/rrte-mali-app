@@ -23,3 +23,24 @@ export function reduireImage(file: File, max = 256, qualite = 0.8): Promise<stri
     img.src = url;
   });
 }
+
+/** Même chose à partir d'une image déjà en base64 (pour fabriquer une vignette). */
+export function reduireDataUrl(src: string, max = 128, qualite = 0.7): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * ratio);
+      c.height = Math.round(img.height * ratio);
+      const ctx = c.getContext("2d");
+      if (!ctx) return reject(new Error("Image illisible"));
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL("image/jpeg", qualite));
+    };
+    img.onerror = () => reject(new Error("Image illisible"));
+    img.src = src;
+  });
+}

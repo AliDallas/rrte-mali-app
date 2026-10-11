@@ -11,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Avis, Prestataire, moyenne, prestataireDepuisDoc } from "@/lib/prestataires";
 import { chiffres } from "@/lib/fiches";
+import { viderCache } from "@/lib/cache";
 
 export default function PrestataireDetailPage() {
   const id = useParams<{ id: string }>()?.id;
@@ -70,6 +71,7 @@ export default function PrestataireDetailPage() {
           sommeNotes: (typeof d.sommeNotes === "number" ? d.sommeNotes : 0) - ancien + note,
         });
       });
+      viderCache("prestataires");
       await charger();
     } catch {
       setErr("Impossible d’enregistrer votre avis. Réessayez.");
@@ -81,6 +83,7 @@ export default function PrestataireDetailPage() {
   async function supprimer() {
     if (!id) return;
     await deleteDoc(doc(db, "prestataires", id));
+    viderCache("prestataires");
     router.push("/prestataires");
   }
 

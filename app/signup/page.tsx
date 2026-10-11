@@ -34,7 +34,7 @@ export default function SignupPage() {
     const f = e.target.files?.[0];
     if (!f) return;
     try {
-      setLogo(await reduireImage(f));
+      setLogo(await reduireImage(f, 160, 0.75));
     } catch {
       setError("Image illisible, essayez un autre fichier.");
     }
