@@ -55,7 +55,7 @@ export default function Suggestions({ texte, categorie, exclureUid }: { texte: s
         })
         .catch(() => undefined);
     getDocs(collection(db, "prestataires"))
-      .then((r) => setPresta(r.docs.map((d) => prestataireDepuisDoc(d.id, d.data()))))
+      .then((r) => setPresta(r.docs.map((d) => prestataireDepuisDoc(d.id, d.data())).filter((x) => x.statut === "valide")))
       .catch(() => undefined);
     getDocs(query(collection(db, "entreprises"), where("statut", "==", "publie")))
       .then((r) => setEnts(r.docs.map((d) => entrepriseDepuisDoc(d.id, d.data()))))

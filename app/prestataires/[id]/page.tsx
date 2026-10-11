@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { collection, deleteDoc, doc, getDoc, getDocs, runTransaction, serverTimestamp } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
 import { ChevronLeft, MapPin, MessageCircle, Phone, Star, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Etoiles from "@/components/Etoiles";
@@ -87,6 +87,13 @@ export default function PrestataireDetailPage() {
     router.push("/prestataires");
   }
 
+  async function valider() {
+    if (!id) return;
+    await updateDoc(doc(db, "prestataires", id), { statut: "valide" });
+    viderCache("prestataires");
+    await charger();
+  }
+
   const peutGerer = !!p && (profile?.role === "admin" || p.ownerUid === user?.uid);
 
   return (
@@ -98,6 +105,16 @@ export default function PrestataireDetailPage() {
       {state === "absent" && <p className="card p-6 text-center text-muted">Fiche introuvable.</p>}
       {state === "ok" && p && (
         <div className="space-y-4">
+          {p.statut === "en_attente" && (
+            <div className="rounded-xl bg-brand-red/10 p-3 text-sm">
+              <p className="font-semibold">En attente de validation par un administrateur</p>
+              {profile?.role === "admin" && (
+                <button onClick={valider} className="btn-gold mt-3">
+                  Valider cette recommandation
+                </button>
+              )}
+            </div>
+          )}
           <div className="card space-y-2 p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">

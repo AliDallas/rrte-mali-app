@@ -8,11 +8,11 @@ import AppShell from "@/components/AppShell";
 import Etoiles from "@/components/Etoiles";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { METIERS, Prestataire, moyenne, prestataireDepuisDoc } from "@/lib/prestataires";
+import { METIERS, Prestataire, moyenne, prestataireDepuisDoc, visiblePour } from "@/lib/prestataires";
 import { ecrireCache, lireCache } from "@/lib/cache";
 
 export default function PrestatairesPage() {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [liste, setListe] = useState<Prestataire[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [metier, setMetier] = useState("");
@@ -39,10 +39,11 @@ export default function PrestatairesPage() {
   const shown = useMemo(() => {
     const n = q.trim().toLowerCase();
     return liste
+      .filter((p) => visiblePour(p, user?.uid, profile?.role === "admin"))
       .filter((p) => !metier || p.metier === metier)
       .filter((p) => !n || `${p.nom} ${p.metier} ${p.quartier} ${p.description}`.toLowerCase().includes(n))
       .sort((a, b) => moyenne(b) - moyenne(a) || b.nbAvis - a.nbAvis || a.nom.localeCompare(b.nom));
-  }, [liste, metier, q]);
+  }, [liste, metier, q, user, profile]);
 
   return (
     <AppShell title="Recommandés" subtitle="Les contacts de confiance des membres">
@@ -98,6 +99,9 @@ export default function PrestatairesPage() {
                 </p>
               </div>
             </div>
+            {p.statut === "en_attente" && (
+              <p className="mt-2 text-xs font-semibold text-brand-red">En attente de validation</p>
+            )}
             {p.ownerNom && <p className="mt-2 text-xs font-semibold text-gold-700">Recommandé par {p.ownerNom}</p>}
           </Link>
         ))}

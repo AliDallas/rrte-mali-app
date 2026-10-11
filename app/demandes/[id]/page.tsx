@@ -92,7 +92,7 @@ export default function DemandeDetailPage() {
       membres: fiches
         .filter((f) => f.uid !== d.auteurUid && hit(`${f.activite} ${f.competences} ${f.propose} ${f.tags.join(" ")}`))
         .slice(0, 5),
-      presta: presta.filter((p) => hit(`${p.metier} ${p.nom} ${p.description}`)).slice(0, 5),
+      presta: presta.filter((p) => p.statut === "valide").filter((p) => hit(`${p.metier} ${p.nom} ${p.description}`)).slice(0, 5),
     };
   }, [d, fiches, presta]);
 
@@ -143,6 +143,7 @@ export default function DemandeDetailPage() {
         ownerNom: `${profile.prenom} ${profile.nom}`.trim(),
         nbAvis: 0,
         sommeNotes: 0,
+        statut: profile.role === "admin" ? "valide" : "en_attente",
         createdAt: serverTimestamp(),
       };
       const ref = await addDoc(collection(db, "prestataires"), data);

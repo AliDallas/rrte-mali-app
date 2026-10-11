@@ -12,6 +12,7 @@ import { Entreprise, enregistrerPhotos, entrepriseDepuisDoc, saisieVersDoc } fro
 import { viderCache } from "@/lib/cache";
 import CopierPresentation from "@/components/CopierPresentation";
 import { DonneesPresentation, donneesDepuisInscription, donneesDepuisFiche } from "@/lib/presentation";
+import { Prestataire, prestataireDepuisDoc } from "@/lib/prestataires";
 import { chiffres, cle, nomComplet, ficheDepuisDoc, Fiche } from "@/lib/fiches";
 
 export default function AdminPage() {
@@ -19,6 +20,7 @@ export default function AdminPage() {
   const [pending, setPending] = useState<MemberProfile[]>([]);
   const [liens, setLiens] = useState<Record<string, Fiche>>({});
   const [entAttente, setEntAttente] = useState<Entreprise[]>([]);
+  const [recoAttente, setRecoAttente] = useState<Prestataire[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [valides, setValides] = useState<DonneesPresentation[]>([]);
@@ -41,6 +43,8 @@ export default function AdminPage() {
     setLiens(trouves);
     const ents = await getDocs(query(collection(db, "entreprises"), where("statut", "==", "en_attente")));
     setEntAttente(ents.docs.map((d) => entrepriseDepuisDoc(d.id, d.data())));
+    const recos = await getDocs(query(collection(db, "prestataires"), where("statut", "==", "en_attente")));
+    setRecoAttente(recos.docs.map((d) => prestataireDepuisDoc(d.id, d.data())));
     setLoaded(true);
   }, []);
 
@@ -104,6 +108,18 @@ export default function AdminPage() {
       await updateDoc(doc(db, "users", uid), { statut });
       if (statut === "actif" && m) setValides((l) => [donneesDepuisInscription(m, liens[uid]), ...l]);
       setPending((p) => p.filter((x) => x.uid !== uid));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function decideReco(id: string, valider: boolean) {
+    setBusy(id);
+    try {
+      if (valider) await updateDoc(doc(db, "prestataires", id), { statut: "valide" });
+      else await deleteDoc(doc(db, "prestataires", id));
+      viderCache("prestataires");
+      setRecoAttente((l) => l.filter((x) => x.id !== id));
     } finally {
       setBusy(null);
     }
@@ -237,6 +253,41 @@ export default function AdminPage() {
                   disabled={busy === x.id}
                   onClick={() => decideEnt(x.id, true)}
                   aria-label="Publier"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500 text-ink hover:bg-gold-600 disabled:opacity-50"
+                >
+                  <Check size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {isAdmin && loaded && recoAttente.length > 0 && (
+        <div className="mt-6">
+          <h2 className="mb-3 font-display text-lg font-bold">Recommandations à valider</h2>
+          <div className="space-y-3">
+            {recoAttente.map((x) => (
+              <div key={x.id} className="card flex items-center gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <Link href={`/prestataires/${x.id}`} className="font-semibold underline">
+                    {x.nom}
+                  </Link>
+                  <p className="truncate text-sm text-muted">
+                    {[x.metier, x.quartier, `recommandé par ${x.ownerNom}`].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+                <button
+                  disabled={busy === x.id}
+                  onClick={() => decideReco(x.id, false)}
+                  aria-label="Refuser"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted hover:border-brand-red hover:text-brand-red disabled:opacity-50"
+                >
+                  <X size={18} />
+                </button>
+                <button
+                  disabled={busy === x.id}
+                  onClick={() => decideReco(x.id, true)}
+                  aria-label="Valider"
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500 text-ink hover:bg-gold-600 disabled:opacity-50"
                 >
                   <Check size={18} />

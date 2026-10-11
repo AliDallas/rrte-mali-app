@@ -3,15 +3,15 @@
 import AppShell from "@/components/AppShell";
 
 const REGLES: [string, string][] = [
-  ["Conditions d’adhésion", "Avoir quitté la France pour s’installer au Mali ou y exercer une activité une partie de l’année, sans distinction de couleur ou de religion."],
-  ["Présentation obligatoire", "Chaque membre doit se présenter en remplissant sa fiche de renseignements dans l’application : nom, numéro de téléphone, ancienneté au Mali."],
-  ["Respect des informations personnelles", "Les données des membres ne doivent pas être utilisées à d’autres fins que celles du groupe : entraide, conseils, relations professionnelles."],
-  ["Publicité et promotion", "Pas de publicité spontanée. Une tribune sera accordée à chacun pour présenter son activité de manière organisée."],
-  ["Contenu publié", "Pas de photos ou de vidéos sans rapport avec les objectifs du groupe."],
-  ["Participation active", "Chaque membre peut et doit donner son avis, ses suggestions et ses objections. Ce groupe nous appartient à tous."],
+  ["Conditions d’adhésion", "Faire partie de la diaspora et être installé au Mali ou y exercer une activité, sans distinction de nationalité, de couleur ou de religion."],
+  ["Fiche complète", "Chaque membre remplit sa fiche de renseignements : coordonnées, activité, ancienneté au Mali. Elle reste visible uniquement par les membres."],
+  ["Respect des données personnelles", "Les coordonnées des membres ne servent qu’à l’entraide, aux conseils et aux relations professionnelles. Elles ne sont ni revendues, ni diffusées, ni utilisées pour du démarchage non sollicité. Les captures d’écran ou exports de l’annuaire pour les envoyer à des tiers sont interdits."],
+  ["Promotion encadrée", "Chacun présente son activité dans les espaces prévus : fiche d’entreprise, recommandations, réponses aux demandes. Pas de messages publicitaires hors de ces espaces, ni de démarchage insistant."],
+  ["Contenus utiles et validés", "Les lieux, entreprises et recommandations publiés sont réels, exacts et en lien avec les objectifs du groupe. Les recommandations et les lieux sont validés par un administrateur avant publication."],
+  ["Avis honnêtes", "Les avis donnés sur les prestataires et les lieux reposent sur une expérience réelle. Pas de faux avis, pas d’attaques personnelles."],
+  ["Participation active", "Chaque membre peut et doit donner son avis, ses suggestions et ses objections. L’application nous appartient à tous."],
   ["Respect mutuel", "Le respect entre membres est une règle de base."],
-  ["Objectifs à garder en tête", "Toujours rester aligné avec la vision et la mission du groupe."],
-  ["Ce que le groupe n’est pas", "Pas un chat privé. Pas une plateforme politique. Pas de différence de caste ou de statut."],
+  ["Ce que l’application n’est pas", "Pas un chat privé. Pas une plateforme politique. Pas de différence de caste ou de statut."],
 ];
 
 export default function ReglementPage() {
@@ -19,28 +19,29 @@ export default function ReglementPage() {
     <AppShell title="Le groupe RRTE" subtitle="Présentation, accueil et règlement" requireAuth={false}>
       <div className="space-y-4">
         <div className="rounded-xl bg-gold-500/10 p-3 text-[15px] font-semibold">
-          Pour intégrer le groupe, il faut être Franco-Malien installé au Mali ou y exercer une activité.
+          Le groupe est réservé aux personnes de la diaspora installées au Mali ou y exerçant une activité.
         </div>
         <section className="card space-y-3 p-5">
           <h2 className="font-display text-lg font-bold">Présentation et objectif du groupe</h2>
           <p className="text-[15px]">
-            Ce groupe s’adresse à tous ceux qui ont quitté la France pour s’installer au Mali ou y exercent une activité.
+            RRTE s’adresse aux personnes de la diaspora installées au Mali ou y exerçant une activité.
             Nous sommes de plus en plus nombreux à franchir le pas. Nos parcours, nos visions et nos mentalités sont
             différents, mais nos ambitions restent les mêmes.
           </p>
           <p className="text-[15px]">
-            <b>Pourquoi ce groupe ?</b> Pour s’unir autour d’un espace exclusivement réservé aux repats, où chacun peut
-            ajouter ses contacts déjà installés au Mali. Un lieu pour :
+            <b>Pourquoi ce groupe ?</b> Pour s’unir autour d’un espace réservé à la communauté, où chacun peut
+            recommander ses contacts déjà installés au Mali. Un lieu pour :
           </p>
           <ul className="list-disc space-y-1 pl-5 text-[15px]">
             <li>le business</li>
             <li>l’entraide</li>
             <li>les conseils</li>
             <li>la promotion de nos activités</li>
+            <li>les bonnes adresses de loisirs à Bamako</li>
           </ul>
           <p className="text-[15px]">
-            Ce groupe n’est pas fait pour les vidéos inutiles, les audios sans lien ou les ventes personnelles. On y
-            partage uniquement des échanges professionnels et constructifs.
+            Chacun peut présenter ses activités dans les espaces prévus de l’application. On y partage des échanges
+            utiles et constructifs.
           </p>
           <p className="text-[15px]">
             Pour aller plus loin, il existe déjà l’Association Repat Mali, l’Union des Ambassadeurs et le CCRM Pôle
@@ -59,14 +60,14 @@ export default function ReglementPage() {
             compléter, c’est dans l’intérêt de tous.
           </p>
           <p className="text-[15px]">
-            <b>Règlement.</b> Un règlement a été mis en place pour garder le groupe organisé et constructif. Merci de le
+            <b>Règlement.</b> Un règlement garde l’application organisée et constructive. Merci de le
             respecter.
           </p>
           <p className="text-[15px]">
             <b>Suggestions.</b> Vous pouvez proposer vos idées et améliorations. Ce groupe nous appartient à tous.
           </p>
           <p className="text-[15px]">
-            <b>Invitations.</b> Vous pouvez en parler à vos contacts repats installés au Mali pour élargir notre réseau.
+            <b>Invitations.</b> Vous pouvez en parler à vos contacts repats installés au Mali pour élargir notre réseau : ils s’inscrivent avec le lien de l’application.
           </p>
         </section>
 

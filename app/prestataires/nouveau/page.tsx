@@ -39,6 +39,7 @@ export default function NouveauPrestatairePage() {
         ownerNom: `${profile.prenom} ${profile.nom}`.trim(),
         nbAvis: 0,
         sommeNotes: 0,
+        statut: profile.role === "admin" ? "valide" : "en_attente",
         createdAt: serverTimestamp(),
       });
       viderCache("prestataires");
@@ -82,8 +83,11 @@ export default function NouveauPrestatairePage() {
             <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className={input} />
           </label>
         </div>
+        {profile?.role !== "admin" && (
+          <p className="text-sm text-muted">Votre recommandation sera publiée après validation par un administrateur.</p>
+        )}
         <button type="submit" disabled={saving} className="btn-gold">
-          {saving ? "Enregistrement..." : "Publier la recommandation"}
+          {saving ? "Enregistrement..." : profile?.role === "admin" ? "Publier la recommandation" : "Envoyer pour validation"}
         </button>
       </form>
     </AppShell>

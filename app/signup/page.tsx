@@ -27,6 +27,7 @@ export default function SignupPage() {
   const [competences, setCompetences] = useState("");
   const [objectif, setObjectif] = useState("");
   const [entreprises, setEntreprises] = useState<EntrepriseSaisie[]>([]);
+  const [accepte, setAccepte] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -114,7 +115,7 @@ export default function SignupPage() {
           </Link>
           <h1 className="font-display text-2xl font-bold">Rejoindre RRTE</h1>
           <p className="text-sm text-ink-mute">
-            Réservé aux Franco-Maliens installés au Mali ou y exerçant une activité. Votre
+            Réservé aux personnes de la diaspora installées au Mali ou y exerçant une activité. Votre
             inscription est validée par un administrateur.
           </p>
         </div>
@@ -123,6 +124,22 @@ export default function SignupPage() {
           <div className="rounded-xl bg-brand-red/20 p-3 text-sm text-[#F0897B]">{error}</div>
         )}
 
+        <div className="space-y-3 rounded-2xl border border-[#454A50] p-4">
+          <p className="text-sm font-semibold">Étape 1 : le règlement du groupe</p>
+          <p className="text-xs text-ink-mute">
+            Lisez le règlement, puis acceptez-le pour accéder au formulaire d’inscription.
+          </p>
+          <a href="/reglement" target="_blank" rel="noopener noreferrer" className="btn-outline block text-center">
+            Lire le règlement
+          </a>
+          <label className="flex items-start gap-2 text-sm text-ink-mute">
+            <input type="checkbox" checked={accepte} onChange={(e) => setAccepte(e.target.checked)} className="mt-1" />
+            <span>J’ai lu et j’accepte le règlement du groupe.</span>
+          </label>
+        </div>
+
+        {accepte && (
+          <>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm text-ink-mute">
             Prénom
@@ -156,8 +173,8 @@ export default function SignupPage() {
             <input value={pays} onChange={(e) => setPays(e.target.value)} className="field-dark mt-1.5" />
           </label>
           <label className="block text-sm text-ink-mute">
-            Année de retour au Mali
-            <input inputMode="numeric" placeholder="ex. 2018" value={anneeRetour} onChange={(e) => setAnneeRetour(e.target.value)} className="field-dark mt-1.5" />
+            Année d’arrivée ou de retour au Mali
+            <input required inputMode="numeric" placeholder="ex. 2018" value={anneeRetour} onChange={(e) => setAnneeRetour(e.target.value)} className="field-dark mt-1.5" />
           </label>
         </div>
         <label className="block text-sm text-ink-mute">
@@ -222,18 +239,10 @@ export default function SignupPage() {
           <input type="password" required minLength={6} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="field-dark mt-1.5" />
         </label>
 
-        <label className="flex items-start gap-2 text-sm text-ink-mute">
-          <input type="checkbox" required className="mt-1" />
-          <span>
-            J’ai lu et j’accepte le{" "}
-            <a href="/reglement" target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-500 underline">
-              règlement du groupe
-            </a>
-            .
-          </span>
-        </label>
+          </>
+        )}
 
-        <button type="submit" disabled={loading} className="btn-gold mt-2">
+        <button type="submit" disabled={loading || !accepte} className="btn-gold mt-2">
           {loading ? "Envoi..." : "Envoyer ma demande"}
         </button>
         <p className="text-center text-sm text-ink-mute">

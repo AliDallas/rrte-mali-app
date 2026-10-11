@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -51,14 +51,37 @@ export default function AppShell({
   const pathname = usePathname();
 
   const [enAttente, setEnAttente] = useState(0);
+  const [reglementOk, setReglementOk] = useState(false);
+  const [accepteOk, setAccepteOk] = useState(false);
+  const [envoi, setEnvoi] = useState(false);
+  // le règlement a été mis à jour : les membres qui l'ont accepté avant cette date doivent le ré-accepter
+  const REGLEMENT_VERSION = Date.UTC(2026, 9, 12);
+  const doitAccepter =
+    !!user && profile?.statut === "actif" && requireAuth && !reglementOk && (profile.reglementAccepteLe ?? 0) < REGLEMENT_VERSION;
+
+  async function accepterReglement() {
+    if (!user) return;
+    setEnvoi(true);
+    try {
+      await updateDoc(doc(db, "users", user.uid), { reglementAccepteLe: Date.now() });
+      setReglementOk(true);
+    } catch {
+      /* réessayer */
+    } finally {
+      setEnvoi(false);
+    }
+  }
   const estAdmin = profile?.role === "admin" && profile?.statut === "actif";
 
   useEffect(() => {
     if (!estAdmin) return;
     let stop = false;
     const charger = () =>
-      getDocs(query(collection(db, "users"), where("statut", "==", "en_attente")))
-        .then((r) => !stop && setEnAttente(r.size))
+      Promise.all([
+        getDocs(query(collection(db, "users"), where("statut", "==", "en_attente"))),
+        getDocs(query(collection(db, "prestataires"), where("statut", "==", "en_attente"))),
+      ])
+        .then(([a, b]) => !stop && setEnAttente(a.size + b.size))
         .catch(() => undefined);
     charger();
     const t = setInterval(charger, 60000);
@@ -107,6 +130,33 @@ export default function AppShell({
               Se déconnecter
             </button>
           </div>
+        </div>
+        <BrandStrip />
+      </main>
+    );
+  }
+
+  if (doitAccepter) {
+    return (
+      <main className="flex min-h-screen flex-col bg-ink text-ink-fg">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 px-7 py-10">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <Logo size={96} />
+            <h1 className="font-display text-2xl font-bold">Règlement mis à jour</h1>
+            <p className="text-sm text-ink-mute">
+              Le règlement de RRTE a évolué pour l’application. Merci de le lire et de l’accepter pour continuer.
+            </p>
+          </div>
+          <a href="/reglement" target="_blank" rel="noopener noreferrer" className="btn-outline block text-center">
+            Lire le règlement
+          </a>
+          <label className="flex items-start gap-2 text-sm text-ink-mute">
+            <input type="checkbox" checked={accepteOk} onChange={(e) => setAccepteOk(e.target.checked)} className="mt-1" />
+            <span>J’ai lu et j’accepte le règlement du groupe.</span>
+          </label>
+          <button className="btn-gold" disabled={!accepteOk || envoi} onClick={accepterReglement}>
+            {envoi ? "Enregistrement..." : "Continuer"}
+          </button>
         </div>
         <BrandStrip />
       </main>

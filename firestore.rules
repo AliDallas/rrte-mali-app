@@ -70,10 +70,13 @@ service cloud.firestore {
     // Prestataires recommandés (coiffeur, couturier, plombier…) avec notes et commentaires
     match /prestataires/{pid} {
       allow read: if isActiveMember();
-      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid;
+      // un membre crée une recommandation "en_attente" ; un admin peut la publier directement
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.statut == 'en_attente');
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
-          request.resource.data.ownerUid == resource.data.ownerUid) ||
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.get('statut', 'valide') == resource.data.get('statut', 'valide')) ||
         (isActiveMember() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nbAvis', 'sommeNotes']));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);

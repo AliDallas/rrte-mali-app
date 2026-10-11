@@ -28,6 +28,7 @@ export interface Prestataire {
   ownerNom: string;
   nbAvis: number;
   sommeNotes: number;
+  statut: "valide" | "en_attente";
 }
 
 export interface Avis {
@@ -51,9 +52,15 @@ export function prestataireDepuisDoc(id: string, x: Record<string, unknown>): Pr
     ownerNom: s(x.ownerNom),
     nbAvis: n(x.nbAvis),
     sommeNotes: n(x.sommeNotes),
+    statut: x.statut === "en_attente" ? "en_attente" : "valide",
   };
 }
 
 export function moyenne(p: Pick<Prestataire, "nbAvis" | "sommeNotes">): number {
   return p.nbAvis > 0 ? p.sommeNotes / p.nbAvis : 0;
+}
+
+/** Une recommandation en attente n'est visible que de son auteur et des administrateurs. */
+export function visiblePour(p: Pick<Prestataire, "statut" | "ownerUid">, uid?: string, admin?: boolean): boolean {
+  return p.statut === "valide" || !!admin || (!!uid && p.ownerUid === uid);
 }
