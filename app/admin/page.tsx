@@ -180,6 +180,13 @@ export default function AdminPage() {
                 ) : (
                   <p className="mt-1 text-xs text-brand-red">Aucune fiche avec ce numéro</p>
                 )}
+                {m.reglementAccepteLe ? (
+                  <p className="mt-1 text-xs font-semibold text-[#3C7026]">
+                    Règlement accepté le {new Date(m.reglementAccepteLe).toLocaleDateString("fr-FR")}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-muted">Règlement : acceptation non enregistrée</p>
+                )}
                 <CopierPresentation donnees={donneesDepuisInscription(m, liens[m.uid])} />
               </div>
               <button

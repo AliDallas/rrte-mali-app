@@ -145,9 +145,14 @@ export default function FicheDetailPage() {
           </div>
 
           {profile?.role === "admin" && (
-            <div className="card p-4">
-              <p className="text-sm font-semibold">Présentation pour le groupe WhatsApp</p>
-              <CopierPresentation donnees={donneesDepuisFiche(fiche)} />
+            <div className="card space-y-3 p-4">
+              <div>
+                <p className="text-sm font-semibold">Présentation pour le groupe WhatsApp</p>
+                <CopierPresentation donnees={donneesDepuisFiche(fiche)} />
+              </div>
+              <Link href={`/annuaire/${fiche.id}/modifier`} className="inline-block rounded-full border border-line bg-white px-3.5 py-1.5 text-sm font-semibold">
+                Corriger la fiche (administrateur)
+              </Link>
             </div>
           )}
 

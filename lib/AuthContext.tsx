@@ -23,8 +23,9 @@ export interface MemberProfile {
   photo?: string;
   fiche?: FicheSaisie;
   entreprises?: EntrepriseSaisie[];
+  reglementAccepteLe?: number;
   role: "member" | "admin";
-  statut: "en_attente" | "actif" | "refuse";
+  statut: "en_attente" | "actif" | "refuse" | "radie";
   createdAt?: unknown;
 }
 
@@ -93,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       entreprises,
       role: "member",
       statut: "en_attente", // en attente d'approbation admin
+      reglementAccepteLe: Date.now(), // la case d'acceptation du règlement est obligatoire à l'inscription
       createdAt: serverTimestamp(),
     });
   }

@@ -222,6 +222,17 @@ export default function SignupPage() {
           <input type="password" required minLength={6} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="field-dark mt-1.5" />
         </label>
 
+        <label className="flex items-start gap-2 text-sm text-ink-mute">
+          <input type="checkbox" required className="mt-1" />
+          <span>
+            J’ai lu et j’accepte le{" "}
+            <a href="/reglement" target="_blank" rel="noopener noreferrer" className="font-semibold text-gold-500 underline">
+              règlement du groupe
+            </a>
+            .
+          </span>
+        </label>
+
         <button type="submit" disabled={loading} className="btn-gold mt-2">
           {loading ? "Envoi..." : "Envoyer ma demande"}
         </button>

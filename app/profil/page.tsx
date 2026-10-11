@@ -7,7 +7,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Badges from "@/components/Badges";
 import { ficheIncomplete, ficheDepuisDoc } from "@/lib/fiches";
-import { LogOut, ShieldCheck, ChevronRight, Mail, Pencil } from "lucide-react";
+import { ScrollText, LogOut, ShieldCheck, ChevronRight, Mail, Pencil } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/AuthContext";
@@ -82,6 +82,12 @@ export default function ProfilPage() {
           <ChevronRight size={18} className="text-muted" />
         </Link>
       )}
+
+      <Link href="/reglement" className="card mb-4 flex items-center gap-3 p-4">
+        <ScrollText size={20} className="text-gold-700" strokeWidth={1.75} />
+        <span className="flex-1 font-semibold">Le groupe et son règlement</span>
+        <ChevronRight size={18} className="text-muted" />
+      </Link>
 
       <button onClick={handleLogout} className="card flex w-full items-center gap-3 p-4 text-left">
         <LogOut size={20} className="text-muted" strokeWidth={1.75} />

@@ -80,17 +80,20 @@ export default function AppShell({
     );
   }
 
-  if (user && (profile?.statut === "en_attente" || profile?.statut === "refuse")) {
-    const refuse = profile?.statut === "refuse";
+  if (user && (profile?.statut === "en_attente" || profile?.statut === "refuse" || profile?.statut === "radie")) {
+    const refuse = profile?.statut === "refuse" || profile?.statut === "radie";
+    const radie = profile?.statut === "radie";
     return (
       <main className="flex min-h-screen flex-col bg-ink text-ink-fg">
         <div className="flex flex-1 flex-col items-center justify-center gap-5 px-8 text-center">
           <Logo size={96} />
           <h1 className="font-display text-2xl font-bold">
-            {refuse ? "Inscription non retenue" : "Inscription en cours d’examen"}
+            {radie ? "Accès retiré" : refuse ? "Inscription non retenue" : "Inscription en cours d’examen"}
           </h1>
           <p className="max-w-sm text-ink-mute">
-            {refuse
+            {radie
+              ? "Votre accès à l’application RRTE a été retiré. Contactez un administrateur RRTE pour en savoir plus."
+              : refuse
               ? "Votre demande n’a pas été validée. Contactez un administrateur RRTE pour en savoir plus."
               : "Un administrateur doit valider votre inscription avant l’accès à l’annuaire. Vous pourrez ensuite vous reconnecter."}
           </p>
