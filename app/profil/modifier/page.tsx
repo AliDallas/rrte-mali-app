@@ -16,7 +16,7 @@ const input =
   "mt-1.5 w-full rounded-2xl border border-line bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold-500";
 
 export default function ModifierFichePage() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const router = useRouter();
   const [fiche, setFiche] = useState<Fiche | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "absente">("loading");
@@ -46,6 +46,7 @@ export default function ModifierFichePage() {
       attentes: x.attentes,
       info: x.info,
       logo: x.logo,
+      photo: x.photo,
     });
     setState("ok");
   }
@@ -56,6 +57,17 @@ export default function ModifierFichePage() {
   }, [user, profile]);
 
   const set = (k: string, v: string) => setF((s) => ({ ...s, [k]: v }));
+
+  async function choisirPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      set("photo", await reduireImage(file, 128, 0.72));
+    } catch {
+      setMsg("Image illisible, essayez un autre fichier.");
+    }
+  }
 
   async function choisirLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -79,6 +91,8 @@ export default function ModifierFichePage() {
       if (data.activite || data.competences) data.statutFiche = "Fiche complète";
       await updateDoc(doc(db, "fiches", fiche.id), data);
       viderCache("annuaire");
+      if (user) await updateDoc(doc(db, "users", user.uid), { photo: data.photo ?? "" });
+      await refreshProfile();
       router.push(`/annuaire/${fiche.id}`);
     } catch {
       setMsg("Impossible d’enregistrer. Réessayez dans un instant.");
@@ -165,6 +179,16 @@ export default function ModifierFichePage() {
             {champ("competences", "Compétences", { area: true })}
             {champ("attentes", "Objectif, besoin, centre d’intérêt", { area: true })}
             {champ("info", "Informations complémentaires", { area: true })}
+            <div className="text-sm font-medium">
+              Photo de profil
+              <div className="mt-1.5 flex items-center gap-3">
+                {f.photo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={f.photo} alt="Photo" className="h-16 w-16 rounded-full object-cover" />
+                )}
+                <input type="file" accept="image/*" onChange={choisirPhoto} className="text-sm" />
+              </div>
+            </div>
             <div className="text-sm font-medium">
               Logo
               <div className="mt-1.5 flex items-center gap-3">

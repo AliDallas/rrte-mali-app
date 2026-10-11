@@ -72,7 +72,7 @@ export default function AdministrateursPage() {
               const moi = m.uid === user?.uid;
               return (
                 <div key={m.uid} className="card flex items-center gap-3 p-4">
-                  <Avatar prenom={m.prenom} nom={m.nom} size={44} />
+                  <Avatar prenom={m.prenom} nom={m.nom} size={44} photo={m.photo} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">
                       {m.prenom} {m.nom}

@@ -17,6 +17,7 @@ export interface Fiche {
   pays: string;
   presentation: string;
   logo: string;
+  photo: string;
   uid: string | null;
 }
 
@@ -29,6 +30,7 @@ export interface FicheSaisie {
   activite: string;
   presentation: string;
   logo: string;
+  photo: string;
   competences: string;
   objectif: string;
 }
@@ -68,6 +70,7 @@ export function ficheDepuisDoc(id: string, x: Record<string, unknown>): Fiche {
     pays: s(x.pays),
     presentation: s(x.presentation),
     logo: s(x.logo),
+    photo: s(x.photo),
     uid: typeof x.uid === "string" ? x.uid : null,
   };
 }

@@ -65,6 +65,7 @@ export default function AdminPage() {
           mettre("activite", f.activite);
           mettre("presentation", f.presentation);
           mettre("logo", f.logo);
+          mettre("photo", f.photo);
           viderCache("annuaire");
           mettre("competences", f.competences);
           mettre("attentes", f.objectif);
@@ -145,7 +146,7 @@ export default function AdminPage() {
         <div className="space-y-3">
           {pending.map((m) => (
             <div key={m.uid} className="card flex items-center gap-3 p-4">
-              <Avatar prenom={m.prenom} nom={m.nom} size={44} />
+              <Avatar prenom={m.prenom} nom={m.nom} size={44} photo={m.photo} />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">
                   {m.prenom} {m.nom}

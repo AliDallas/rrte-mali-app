@@ -68,7 +68,7 @@ export default function AnnuairePage() {
       <div className="grid grid-cols-2 gap-3">
         {filtered.map((f) => (
           <Link key={f.id} href={`/annuaire/${f.id}`} className="card flex flex-col items-center gap-1 px-3 py-5 text-center">
-            <Avatar prenom={f.prenom || f.nom} nom={f.prenom ? f.nom : ""} size={56} />
+            <Avatar prenom={f.prenom || f.nom} nom={f.prenom ? f.nom : ""} size={56} photo={f.photo} />
             <p className="mt-1 text-sm font-semibold">{nomComplet(f)}</p>
             {f.activite && <p className="line-clamp-2 text-xs text-muted">{f.activite}</p>}
           </Link>

@@ -9,7 +9,9 @@ export default function Avatar({
   prenom,
   nom,
   size = 48,
+  photo,
 }: {
+  photo?: string;
   prenom?: string;
   nom?: string;
   size?: number;
@@ -18,6 +20,12 @@ export default function Avatar({
   const seed = `${prenom ?? ""}${nom ?? ""}`;
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 997;
+  if (photo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={photo} alt="" className="flex-none rounded-full object-cover" style={{ width: size, height: size }} />
+    );
+  }
   return (
     <div
       className={`flex flex-none items-center justify-center rounded-full font-display font-bold ${TINTS[h % TINTS.length]}`}

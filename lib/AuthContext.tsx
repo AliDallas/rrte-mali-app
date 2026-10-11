@@ -20,6 +20,7 @@ export interface MemberProfile {
   nom: string;
   prenom: string;
   telephone?: string;
+  photo?: string;
   fiche?: FicheSaisie;
   entreprises?: EntrepriseSaisie[];
   role: "member" | "admin";
@@ -34,6 +35,7 @@ interface AuthContextType {
   signup: (email: string, password: string, nom: string, prenom: string, telephone: string, fiche: FicheSaisie, entreprises: EntrepriseSaisie[]) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       prenom,
       telephone,
       fiche,
+      photo: fiche.photo || "",
       entreprises,
       role: "member",
       statut: "en_attente", // en attente d'approbation admin
@@ -98,12 +101,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   }
 
+  async function refreshProfile() {
+    if (!auth.currentUser) return;
+    const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    if (snap.exists()) {
+      const p = snap.data() as MemberProfile;
+      setProfile(p);
+      try {
+        const { fiche, entreprises, ...leger } = p;
+        void fiche;
+        void entreprises;
+        localStorage.setItem(`rrte-profil-${auth.currentUser.uid}`, JSON.stringify(leger));
+      } catch {
+        /* ignoré */
+      }
+    }
+  }
+
   async function logout() {
     await signOut(auth);
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, signup, login, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

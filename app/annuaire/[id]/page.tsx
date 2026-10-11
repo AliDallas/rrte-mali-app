@@ -57,11 +57,11 @@ export default function FicheDetailPage() {
       {state === "ok" && fiche && (
         <div className="space-y-4">
           <div className="card flex flex-col items-center gap-3 p-6 text-center">
-            {fiche.logo ? (
+            {!fiche.photo && fiche.logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={fiche.logo} alt="Logo" className="h-20 w-20 rounded-2xl object-cover" />
             ) : (
-              <Avatar prenom={fiche.prenom || fiche.nom} nom={fiche.prenom ? fiche.nom : ""} size={72} />
+              <Avatar prenom={fiche.prenom || fiche.nom} nom={fiche.prenom ? fiche.nom : ""} size={fiche.photo ? 96 : 72} photo={fiche.photo} />
             )}
             <div>
               <p className="font-display text-xl font-bold">{nomComplet(fiche)}</p>

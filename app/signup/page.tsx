@@ -23,6 +23,7 @@ export default function SignupPage() {
   const [activite, setActivite] = useState("");
   const [presentation, setPresentation] = useState("");
   const [logo, setLogo] = useState("");
+  const [photo, setPhoto] = useState("");
   const [competences, setCompetences] = useState("");
   const [objectif, setObjectif] = useState("");
   const [entreprises, setEntreprises] = useState<EntrepriseSaisie[]>([]);
@@ -40,10 +41,20 @@ export default function SignupPage() {
     }
   }
 
+  async function choisirPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      setPhoto(await reduireImage(f, 128, 0.72));
+    } catch {
+      setError("Image illisible, essayez un autre fichier.");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (JSON.stringify([logo, entreprises]).length > 800000) {
+    if (JSON.stringify([logo, photo, entreprises]).length > 800000) {
       setError("Les photos sont trop lourdes : retirez-en quelques-unes (vous pourrez les ajouter ensuite dans l’application).");
       return;
     }
@@ -57,6 +68,7 @@ export default function SignupPage() {
         activite: activite.trim(),
         presentation: presentation.trim(),
         logo,
+        photo,
         competences: competences.trim(),
         objectif: objectif.trim(),
       }, entreprises.filter((x) => x.nom.trim()));
@@ -128,6 +140,11 @@ export default function SignupPage() {
         <label className="block text-sm text-ink-mute">
           Adresse e-mail
           <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="field-dark mt-1.5" />
+        </label>
+        <label className="block text-sm text-ink-mute">
+          Photo de profil (facultatif)
+          <input type="file" accept="image/*" onChange={choisirPhoto} className="mt-1.5 block w-full text-sm" />
+          {photo && <img src={photo} alt="Aperçu" className="mt-2 h-20 w-20 rounded-full object-cover" />}
         </label>
         <label className="block text-sm text-ink-mute">
           Réseaux sociaux (Facebook, Instagram…)

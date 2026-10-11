@@ -43,7 +43,7 @@ service cloud.firestore {
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(
           ['nom', 'prenom', 'email', 'ville', 'activite', 'competences', 'anciennete', 'reseaux',
-           'attentes', 'info', 'pays', 'presentation', 'logo', 'statutFiche', 'aConfirmer']);
+           'attentes', 'info', 'pays', 'presentation', 'logo', 'photo', 'statutFiche', 'aConfirmer']);
     }
 
     // Entreprises des membres (5 maximum par membre, contrôlé par l'application) : membres actifs uniquement

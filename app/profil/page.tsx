@@ -19,7 +19,7 @@ export default function ProfilPage() {
   return (
     <AppShell title="Mon profil" subtitle="Votre fiche dans la communauté">
       <div className="card mb-4 flex items-center gap-4 p-4">
-        <Avatar prenom={profile?.prenom} nom={profile?.nom} size={64} />
+        <Avatar prenom={profile?.prenom} nom={profile?.nom} size={64} photo={profile?.photo} />
         <div className="min-w-0">
           <p className="font-display text-xl font-bold">
             {profile?.prenom} {profile?.nom}
