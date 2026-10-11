@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { Check, FileSpreadsheet, X } from "lucide-react";
+import { Check, FileSpreadsheet, ShieldCheck, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
@@ -117,6 +117,15 @@ export default function AdminPage() {
 
   return (
     <AppShell title="Administration" subtitle="Valider les inscriptions">
+      {isAdmin && (
+        <Link href="/admin/administrateurs" className="card mb-4 flex items-center gap-3 p-4">
+          <ShieldCheck className="text-gold-600" size={22} strokeWidth={1.75} />
+          <div className="flex-1">
+            <p className="font-semibold">Administrateurs</p>
+            <p className="text-xs text-muted">Nommer ou retirer un administrateur</p>
+          </div>
+        </Link>
+      )}
       {isAdmin && (
         <Link href="/admin/import" className="card mb-4 flex items-center gap-3 p-4">
           <FileSpreadsheet className="text-gold-600" size={22} strokeWidth={1.75} />
