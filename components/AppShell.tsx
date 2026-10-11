@@ -35,6 +35,9 @@ const GUEST_NAV = [
   { href: "/login", label: "Connexion", Icon: LogIn },
 ];
 
+// mémorise l'acceptation pour toute la session, même si le profil enregistré n'est pas encore à jour
+let reglementAccepteSession = false;
+
 export default function AppShell({
   title,
   subtitle,
@@ -46,12 +49,12 @@ export default function AppShell({
   children: ReactNode;
   requireAuth?: boolean;
 }) {
-  const { user, profile, loading, logout } = useAuth();
+  const { user, profile, loading, logout, refreshProfile } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   const [enAttente, setEnAttente] = useState(0);
-  const [reglementOk, setReglementOk] = useState(false);
+  const [reglementOk, setReglementOk] = useState(reglementAccepteSession);
   const [accepteOk, setAccepteOk] = useState(false);
   const [envoi, setEnvoi] = useState(false);
   // le règlement a été mis à jour : les membres qui l'ont accepté avant cette date doivent le ré-accepter
@@ -64,7 +67,9 @@ export default function AppShell({
     setEnvoi(true);
     try {
       await updateDoc(doc(db, "users", user.uid), { reglementAccepteLe: Date.now() });
+      reglementAccepteSession = true;
       setReglementOk(true);
+      await refreshProfile().catch(() => undefined);
     } catch {
       /* réessayer */
     } finally {
