@@ -8,6 +8,8 @@ import { Briefcase, ChevronLeft, Mail, MessageCircle, Phone } from "lucide-react
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import Badges from "@/components/Badges";
+import CopierPresentation from "@/components/CopierPresentation";
+import { donneesDepuisFiche } from "@/lib/presentation";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Fiche, chiffres, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
@@ -141,6 +143,13 @@ export default function FicheDetailPage() {
               <p className="text-sm text-muted">Ce membre n’a pas encore complété sa fiche.</p>
             )}
           </div>
+
+          {profile?.role === "admin" && (
+            <div className="card p-4">
+              <p className="text-sm font-semibold">Présentation pour le groupe WhatsApp</p>
+              <CopierPresentation donnees={donneesDepuisFiche(fiche)} />
+            </div>
+          )}
 
           {ents.length > 0 && (
             <div className="space-y-3">

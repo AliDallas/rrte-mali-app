@@ -10,6 +10,8 @@ import { db } from "@/lib/firebase";
 import { useAuth, MemberProfile } from "@/lib/AuthContext";
 import { Entreprise, enregistrerPhotos, entrepriseDepuisDoc, saisieVersDoc } from "@/lib/entreprises";
 import { viderCache } from "@/lib/cache";
+import CopierPresentation from "@/components/CopierPresentation";
+import { DonneesPresentation, donneesDepuisInscription, donneesDepuisFiche } from "@/lib/presentation";
 import { chiffres, cle, nomComplet, ficheDepuisDoc, Fiche } from "@/lib/fiches";
 
 export default function AdminPage() {
@@ -19,6 +21,7 @@ export default function AdminPage() {
   const [entAttente, setEntAttente] = useState<Entreprise[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [valides, setValides] = useState<DonneesPresentation[]>([]);
   const isAdmin = profile?.role === "admin";
 
   const load = useCallback(async () => {
@@ -99,6 +102,7 @@ export default function AdminPage() {
         viderCache("entreprises");
       }
       await updateDoc(doc(db, "users", uid), { statut });
+      if (statut === "actif" && m) setValides((l) => [donneesDepuisInscription(m, liens[uid]), ...l]);
       setPending((p) => p.filter((x) => x.uid !== uid));
     } finally {
       setBusy(null);
@@ -136,6 +140,17 @@ export default function AdminPage() {
           </div>
         </Link>
       )}
+      {isAdmin && valides.length > 0 && (
+        <div className="mb-5 space-y-3">
+          <h2 className="font-display text-lg font-bold">Membres validés : à annoncer dans le groupe</h2>
+          {valides.map((v, i) => (
+            <div key={i} className="card border-2 border-emerald-500 p-4">
+              <p className="font-semibold">{`${v.prenom} ${v.nom}`.trim()}</p>
+              <CopierPresentation donnees={v} />
+            </div>
+          ))}
+        </div>
+      )}
       {!isAdmin ? (
         <p className="card p-6 text-center text-muted">Cette page est réservée aux administrateurs.</p>
       ) : !loaded ? (
@@ -145,7 +160,7 @@ export default function AdminPage() {
       ) : (
         <div className="space-y-3">
           {pending.map((m) => (
-            <div key={m.uid} className="card flex items-center gap-3 p-4">
+            <div key={m.uid} className="card flex items-start gap-3 p-4">
               <Avatar prenom={m.prenom} nom={m.nom} size={44} photo={m.photo} />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">
@@ -165,6 +180,7 @@ export default function AdminPage() {
                 ) : (
                   <p className="mt-1 text-xs text-brand-red">Aucune fiche avec ce numéro</p>
                 )}
+                <CopierPresentation donnees={donneesDepuisInscription(m, liens[m.uid])} />
               </div>
               <button
                 disabled={busy === m.uid}
