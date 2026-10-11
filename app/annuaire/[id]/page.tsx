@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { ChevronLeft, Mail, MessageCircle, Phone } from "lucide-react";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { Briefcase, ChevronLeft, Mail, MessageCircle, Phone } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { Fiche, chiffres, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
+import { Entreprise, entrepriseDepuisDoc } from "@/lib/entreprises";
 
 function Bloc({ titre, texte }: { titre: string; texte: string }) {
   if (!texte) return null;
@@ -26,6 +27,7 @@ export default function FicheDetailPage() {
   const id = params?.id;
   const { profile } = useAuth();
   const [fiche, setFiche] = useState<Fiche | null>(null);
+  const [ents, setEnts] = useState<Entreprise[]>([]);
   const [state, setState] = useState<"loading" | "ok" | "absent">("loading");
 
   useEffect(() => {
@@ -33,8 +35,14 @@ export default function FicheDetailPage() {
     getDoc(doc(db, "fiches", id))
       .then((snap) => {
         if (!snap.exists()) return setState("absent");
-        setFiche(ficheDepuisDoc(snap.id, snap.data()));
+        const f = ficheDepuisDoc(snap.id, snap.data());
+        setFiche(f);
         setState("ok");
+        if (f.uid) {
+          getDocs(query(collection(db, "entreprises"), where("ownerUid", "==", f.uid), where("statut", "==", "publie")))
+            .then((r) => setEnts(r.docs.map((d) => entrepriseDepuisDoc(d.id, d.data()))))
+            .catch(() => undefined);
+        }
       })
       .catch(() => setState("absent"));
   }, [id, profile]);
@@ -112,6 +120,28 @@ export default function FicheDetailPage() {
               <p className="text-sm text-muted">Ce membre n’a pas encore complété sa fiche.</p>
             )}
           </div>
+
+          {ents.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="font-display text-lg font-bold">Ses entreprises</h2>
+              {ents.map((e) => (
+                <Link key={e.id} href={`/entreprises/${e.id}`} className="card flex items-center gap-4 p-4">
+                  {e.logo || e.vignette ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={e.logo || e.vignette} alt="" className="h-14 w-14 flex-none rounded-xl object-cover" />
+                  ) : (
+                    <div className="flex h-14 w-14 flex-none items-center justify-center rounded-xl bg-gold-100 text-gold-700">
+                      <Briefcase size={22} strokeWidth={1.75} />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{e.nom}</p>
+                    <p className="truncate text-sm text-muted">{[e.categorie, e.quartier].filter(Boolean).join(" · ")}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </AppShell>
