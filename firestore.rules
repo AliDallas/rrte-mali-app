@@ -38,6 +38,12 @@ service cloud.firestore {
     match /fiches/{ficheId} {
       allow read: if isActiveMember();
       allow write: if isAdmin();
+      // un membre peut modifier sa propre fiche (reliée à son compte), sans toucher aux numéros ni au lien
+      allow update: if isActiveMember() && resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+          ['nom', 'prenom', 'email', 'ville', 'activite', 'competences', 'anciennete', 'reseaux',
+           'attentes', 'info', 'pays', 'presentation', 'logo', 'statutFiche', 'aConfirmer']);
     }
 
     // Entreprises des membres (5 maximum par membre, contrôlé par l'application) : membres actifs uniquement

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, ShieldCheck, ChevronRight, Mail } from "lucide-react";
+import { LogOut, ShieldCheck, ChevronRight, Mail, Pencil } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/AuthContext";
@@ -32,6 +32,12 @@ export default function ProfilPage() {
           </span>
         </div>
       </div>
+
+      <Link href="/profil/modifier" className="card mb-4 flex items-center gap-3 p-4">
+        <Pencil size={20} className="text-gold-700" strokeWidth={1.75} />
+        <span className="flex-1 font-semibold">Modifier ma fiche de renseignements</span>
+        <ChevronRight size={18} className="text-muted" />
+      </Link>
 
       {profile?.role === "admin" && (
         <Link href="/admin" className="card mb-4 flex items-center gap-3 p-4">
