@@ -34,6 +34,12 @@ service cloud.firestore {
     }
 
     // Entreprises & Restaurants : lecture publique, écriture par le propriétaire ou admin
+    // Fiches de l'annuaire : lecture par les membres actifs, écriture par les administrateurs
+    match /fiches/{ficheId} {
+      allow read: if isActiveMember();
+      allow write: if isAdmin();
+    }
+
     match /businesses/{bizId} {
       allow read: if true;
       allow create: if isActiveMember();

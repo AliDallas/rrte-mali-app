@@ -10,6 +10,7 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
+  const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +22,7 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      await signup(email, password, nom, prenom);
+      await signup(email, password, nom, prenom, telephone);
       setSuccess(true);
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
@@ -83,6 +84,10 @@ export default function SignupPage() {
             <input required value={nom} onChange={(e) => setNom(e.target.value)} className="field-dark mt-1.5" />
           </label>
         </div>
+        <label className="block text-sm text-ink-mute">
+          Numéro de téléphone (celui du groupe WhatsApp)
+          <input type="tel" required autoComplete="tel" placeholder="+223 …" value={telephone} onChange={(e) => setTelephone(e.target.value)} className="field-dark mt-1.5" />
+        </label>
         <label className="block text-sm text-ink-mute">
           Adresse e-mail
           <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="field-dark mt-1.5" />

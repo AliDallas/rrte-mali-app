@@ -17,6 +17,7 @@ export interface MemberProfile {
   email: string;
   nom: string;
   prenom: string;
+  telephone?: string;
   role: "member" | "admin";
   statut: "en_attente" | "actif" | "refuse";
   createdAt?: unknown;
@@ -26,7 +27,7 @@ interface AuthContextType {
   user: User | null;
   profile: MemberProfile | null;
   loading: boolean;
-  signup: (email: string, password: string, nom: string, prenom: string) => Promise<void>;
+  signup: (email: string, password: string, nom: string, prenom: string, telephone: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  async function signup(email: string, password: string, nom: string, prenom: string) {
+  async function signup(email: string, password: string, nom: string, prenom: string, telephone: string) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await sendEmailVerification(cred.user);
     await setDoc(doc(db, "users", cred.user.uid), {
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       nom,
       prenom,
+      telephone,
       role: "member",
       statut: "en_attente", // en attente d'approbation admin
       createdAt: serverTimestamp(),
