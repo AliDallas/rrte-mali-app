@@ -140,22 +140,25 @@ export default function SignupPage() {
 
         {accepte && (
           <>
+        <p className="text-xs text-ink-mute">
+          Les champs marqués d’une <span className="font-bold text-gold-500">*</span> sont obligatoires.
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm text-ink-mute">
-            Prénom
+            Prénom<span className="font-bold text-gold-500"> *</span>
             <input required value={prenom} onChange={(e) => setPrenom(e.target.value)} className="field-dark mt-1.5" />
           </label>
           <label className="block text-sm text-ink-mute">
-            Nom
+            Nom<span className="font-bold text-gold-500"> *</span>
             <input required value={nom} onChange={(e) => setNom(e.target.value)} className="field-dark mt-1.5" />
           </label>
         </div>
         <label className="block text-sm text-ink-mute">
-          Numéro de téléphone (celui du groupe WhatsApp)
+          Numéro de téléphone (celui du groupe WhatsApp)<span className="font-bold text-gold-500"> *</span>
           <input type="tel" required autoComplete="tel" placeholder="+223 …" value={telephone} onChange={(e) => setTelephone(e.target.value)} className="field-dark mt-1.5" />
         </label>
         <label className="block text-sm text-ink-mute">
-          Adresse e-mail
+          Adresse e-mail<span className="font-bold text-gold-500"> *</span>
           <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="field-dark mt-1.5" />
         </label>
         <label className="block text-sm text-ink-mute">
@@ -173,7 +176,7 @@ export default function SignupPage() {
             <input value={pays} onChange={(e) => setPays(e.target.value)} className="field-dark mt-1.5" />
           </label>
           <label className="block text-sm text-ink-mute">
-            Année d’arrivée ou de retour au Mali
+            Année d’arrivée ou de retour au Mali<span className="font-bold text-gold-500"> *</span>
             <input required inputMode="numeric" placeholder="ex. 2018" value={anneeRetour} onChange={(e) => setAnneeRetour(e.target.value)} className="field-dark mt-1.5" />
           </label>
         </div>
@@ -235,7 +238,7 @@ export default function SignupPage() {
           )}
         </div>
         <label className="block text-sm text-ink-mute">
-          Mot de passe
+          Mot de passe<span className="font-bold text-gold-500"> *</span>
           <input type="password" required minLength={6} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className="field-dark mt-1.5" />
         </label>
 

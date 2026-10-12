@@ -126,6 +126,11 @@ export default function AppShell({
               ? "Votre demande n’a pas été validée. Contactez un administrateur RRTE pour en savoir plus."
               : "Un administrateur doit valider votre inscription avant l’accès à l’annuaire. Vous pourrez ensuite vous reconnecter."}
           </p>
+          {refuse && !radie && profile?.messageRefus && (
+            <p className="max-w-sm whitespace-pre-line rounded-2xl border border-[#454A50] p-4 text-left text-sm text-ink-mute">
+              {profile.messageRefus}
+            </p>
+          )}
           <div className="w-full max-w-xs space-y-3">
             {!refuse && (
               <button className="btn-gold" onClick={() => window.location.reload()}>

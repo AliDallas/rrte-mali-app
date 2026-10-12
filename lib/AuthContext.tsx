@@ -24,6 +24,7 @@ export interface MemberProfile {
   fiche?: FicheSaisie;
   entreprises?: EntrepriseSaisie[];
   reglementAccepteLe?: number;
+  messageRefus?: string;
   role: "member" | "admin";
   statut: "en_attente" | "actif" | "refuse" | "radie";
   createdAt?: unknown;

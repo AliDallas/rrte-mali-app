@@ -20,6 +20,8 @@ export default function AdminPage() {
   const [pending, setPending] = useState<MemberProfile[]>([]);
   const [liens, setLiens] = useState<Record<string, Fiche>>({});
   const [possibles, setPossibles] = useState<Record<string, Fiche[]>>({});
+  const [refusDe, setRefusDe] = useState<string | null>(null);
+  const [msgRefus, setMsgRefus] = useState("");
   const [choix, setChoix] = useState<Record<string, string>>({}); // uid -> id de la fiche choisie ("" = automatique, "nouvelle" = aucune)
   const [entAttente, setEntAttente] = useState<Entreprise[]>([]);
   const [recoAttente, setRecoAttente] = useState<Prestataire[]>([]);
@@ -75,6 +77,36 @@ export default function AdminPage() {
     if (c === "nouvelle") return undefined;
     if (c) return (possibles[m.uid] ?? []).find((f) => f.id === c);
     return liens[m.uid];
+  }
+
+  const MODELES: [string, (p: string) => string][] = [
+    [
+      "Pas installé / pas d’activité au Mali",
+      (p) =>
+        `Bonjour${p ? ` ${p}` : ""},\n\nMerci pour l’intérêt que vous portez à RRTE. Après examen de votre demande, nous ne pouvons pas vous donner accès pour le moment : l’application est réservée aux personnes de la diaspora installées au Mali ou y exerçant une activité.\n\nSi votre situation évolue, vous pourrez nous refaire une demande. Nous vous souhaitons une belle continuation.\n\nL’équipe RRTE`,
+    ],
+    [
+      "Informations incomplètes ou non vérifiables",
+      (p) =>
+        `Bonjour${p ? ` ${p}` : ""},\n\nMerci pour votre demande d’accès à RRTE. Nous n’avons pas pu la valider car les informations fournies sont incomplètes ou n’ont pas pu être vérifiées. N’hésitez pas à nous contacter pour les compléter.\n\nL’équipe RRTE`,
+    ],
+    ["Autre motif (à rédiger)", (p) => `Bonjour${p ? ` ${p}` : ""},\n\n\n\nL’équipe RRTE`],
+  ];
+
+  function ouvrirRefus(m: MemberProfile) {
+    setRefusDe(m.uid);
+    setMsgRefus(MODELES[0][1](m.prenom));
+  }
+
+  async function confirmerRefus(m: MemberProfile) {
+    setBusy(m.uid);
+    try {
+      await updateDoc(doc(db, "users", m.uid), { statut: "refuse", messageRefus: msgRefus.trim() });
+      setPending((l) => l.filter((x) => x.uid !== m.uid));
+      setRefusDe(null);
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function decide(uid: string, statut: "actif" | "refuse") {
@@ -205,7 +237,7 @@ export default function AdminPage() {
       ) : (
         <div className="space-y-3">
           {pending.map((m) => (
-            <div key={m.uid} className="card flex items-start gap-3 p-4">
+            <div key={m.uid} className="card flex flex-wrap items-start gap-3 p-4">
               <Avatar prenom={m.prenom} nom={m.nom} size={44} photo={m.photo} />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">
@@ -259,7 +291,7 @@ export default function AdminPage() {
               </div>
               <button
                 disabled={busy === m.uid}
-                onClick={() => decide(m.uid, "refuse")}
+                onClick={() => ouvrirRefus(m)}
                 aria-label="Refuser"
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted hover:border-brand-red hover:text-brand-red disabled:opacity-50"
               >
@@ -273,6 +305,48 @@ export default function AdminPage() {
               >
                 <Check size={18} />
               </button>
+              {refusDe === m.uid && (
+                <div className="basis-full space-y-2 rounded-xl border border-brand-red/40 bg-brand-red/5 p-3">
+                  <p className="text-sm font-semibold">Refuser cette demande et envoyer un message</p>
+                  <select
+                    onChange={(e) => setMsgRefus(MODELES[Number(e.target.value)][1](m.prenom))}
+                    className="w-full rounded-lg border border-line bg-white px-2 py-2 text-sm"
+                  >
+                    {MODELES.map(([t], i) => (
+                      <option key={t} value={i}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <textarea
+                    rows={7}
+                    value={msgRefus}
+                    onChange={(e) => setMsgRefus(e.target.value)}
+                    className="w-full rounded-lg border border-line bg-white p-2 text-sm"
+                  />
+                  <p className="text-xs text-muted">
+                    Ce message sera aussi affiché à la personne quand elle se connectera. Vous pouvez en plus le lui envoyer par WhatsApp.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {m.telephone && (
+                      <a
+                        href={`https://wa.me/${chiffres(m.telephone)}?text=${encodeURIComponent(msgRefus)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-outline flex-1 text-center"
+                      >
+                        Envoyer par WhatsApp
+                      </a>
+                    )}
+                    <button disabled={busy === m.uid} onClick={() => confirmerRefus(m)} className="btn-gold flex-1">
+                      Confirmer le refus
+                    </button>
+                    <button onClick={() => setRefusDe(null)} className="w-full text-sm text-muted">
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
