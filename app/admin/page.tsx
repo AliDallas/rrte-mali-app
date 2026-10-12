@@ -11,7 +11,8 @@ import { useAuth, MemberProfile } from "@/lib/AuthContext";
 import { Entreprise, enregistrerPhotos, entrepriseDepuisDoc, saisieVersDoc } from "@/lib/entreprises";
 import { viderCache } from "@/lib/cache";
 import CopierPresentation from "@/components/CopierPresentation";
-import { DonneesPresentation, donneesDepuisInscription, donneesDepuisFiche } from "@/lib/presentation";
+import MessagePersonne from "@/components/MessagePersonne";
+import { DonneesPresentation, donneesDepuisInscription, donneesDepuisFiche, texteAcceptation } from "@/lib/presentation";
 import { Prestataire, prestataireDepuisDoc } from "@/lib/prestataires";
 import { chiffres, cle, nomComplet, ficheDepuisDoc, Fiche } from "@/lib/fiches";
 
@@ -219,11 +220,20 @@ export default function AdminPage() {
       )}
       {isAdmin && valides.length > 0 && (
         <div className="mb-5 space-y-3">
-          <h2 className="font-display text-lg font-bold">Membres validés : à annoncer dans le groupe</h2>
+          <h2 className="font-display text-lg font-bold">Membres validés : à prévenir et à annoncer</h2>
           {valides.map((v, i) => (
-            <div key={i} className="card border-2 border-emerald-500 p-4">
+            <div key={i} className="card space-y-3 border-2 border-emerald-500 p-4">
               <p className="font-semibold">{`${v.prenom} ${v.nom}`.trim()}</p>
-              <CopierPresentation donnees={v} />
+              <div>
+                <p className="text-sm font-semibold">1. Prévenir la personne</p>
+                <div className="mt-1">
+                  <MessagePersonne tel={v.tel} message={texteAcceptation(v.prenom)} />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-semibold">2. Annoncer dans le groupe WhatsApp</p>
+                <CopierPresentation donnees={v} />
+              </div>
             </div>
           ))}
         </div>
@@ -325,19 +335,10 @@ export default function AdminPage() {
                     className="w-full rounded-lg border border-line bg-white p-2 text-sm"
                   />
                   <p className="text-xs text-muted">
-                    Ce message sera aussi affiché à la personne quand elle se connectera. Vous pouvez en plus le lui envoyer par WhatsApp.
+                    Ce message sera aussi affiché à la personne quand elle se connectera. Vous pouvez aussi le copier ou l’envoyer directement par WhatsApp.
                   </p>
+                  <MessagePersonne tel={m.telephone || ""} message={msgRefus} sansApercu />
                   <div className="flex flex-wrap gap-2">
-                    {m.telephone && (
-                      <a
-                        href={`https://wa.me/${chiffres(m.telephone)}?text=${encodeURIComponent(msgRefus)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-outline flex-1 text-center"
-                      >
-                        Envoyer par WhatsApp
-                      </a>
-                    )}
                     <button disabled={busy === m.uid} onClick={() => confirmerRefus(m)} className="btn-gold flex-1">
                       Confirmer le refus
                     </button>
