@@ -181,12 +181,12 @@ export default function SignupPage() {
           </label>
         </div>
         <label className="block text-sm text-ink-mute">
-          Quartier de résidence au Mali
-          <input value={quartier} onChange={(e) => setQuartier(e.target.value)} className="field-dark mt-1.5" />
+          Quartier de résidence au Mali<span className="font-bold text-gold-500"> *</span>
+          <input required value={quartier} onChange={(e) => setQuartier(e.target.value)} className="field-dark mt-1.5" />
         </label>
         <label className="block text-sm text-ink-mute">
-          Domaine d’activité ou profession
-          <input value={activite} onChange={(e) => setActivite(e.target.value)} className="field-dark mt-1.5" />
+          Domaine d’activité ou profession<span className="font-bold text-gold-500"> *</span>
+          <input required value={activite} onChange={(e) => setActivite(e.target.value)} className="field-dark mt-1.5" />
         </label>
         <label className="block text-sm text-ink-mute">
           Présentation de votre entreprise ou projet en cours
