@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayUnion, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { Check, FileSpreadsheet, ShieldCheck, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
@@ -19,6 +19,8 @@ export default function AdminPage() {
   const { profile } = useAuth();
   const [pending, setPending] = useState<MemberProfile[]>([]);
   const [liens, setLiens] = useState<Record<string, Fiche>>({});
+  const [possibles, setPossibles] = useState<Record<string, Fiche[]>>({});
+  const [choix, setChoix] = useState<Record<string, string>>({}); // uid -> id de la fiche choisie ("" = automatique, "nouvelle" = aucune)
   const [entAttente, setEntAttente] = useState<Entreprise[]>([]);
   const [recoAttente, setRecoAttente] = useState<Prestataire[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -41,6 +43,21 @@ export default function AdminPage() {
       })
     );
     setLiens(trouves);
+    // doublons possibles : même e-mail ou même nom dans l'annuaire (la personne a pu donner un autre numéro)
+    const toutes = await getDocs(collection(db, "fiches"));
+    const fiches = toutes.docs.map((d) => ficheDepuisDoc(d.id, d.data()));
+    const nn = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const poss: Record<string, Fiche[]> = {};
+    for (const m of list) {
+      const mots = nn(`${m.prenom} ${m.nom}`).split(" ").filter((w) => w.length > 1);
+      poss[m.uid] = fiches.filter((f) => {
+        if (trouves[m.uid]?.id === f.id) return false;
+        if (m.email && f.email && f.email.trim().toLowerCase() === m.email.trim().toLowerCase()) return true;
+        const cible = nn(`${f.prenom} ${f.nom}`);
+        return mots.length >= 2 && mots.every((w) => cible.includes(w));
+      });
+    }
+    setPossibles(poss);
     const ents = await getDocs(query(collection(db, "entreprises"), where("statut", "==", "en_attente")));
     setEntAttente(ents.docs.map((d) => entrepriseDepuisDoc(d.id, d.data())));
     const recos = await getDocs(query(collection(db, "prestataires"), where("statut", "==", "en_attente")));
@@ -51,6 +68,14 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdmin) load().catch(() => setLoaded(true));
   }, [isAdmin, load]);
+
+  // fiche à laquelle rattacher l'inscription : celle choisie par l'administrateur, sinon celle trouvée par le numéro
+  function ficheRetenue(m: MemberProfile): Fiche | undefined {
+    const c = choix[m.uid];
+    if (c === "nouvelle") return undefined;
+    if (c) return (possibles[m.uid] ?? []).find((f) => f.id === c);
+    return liens[m.uid];
+  }
 
   async function decide(uid: string, statut: "actif" | "refuse") {
     setBusy(uid);
@@ -77,9 +102,13 @@ export default function AdminPage() {
           mettre("competences", f.competences);
           mettre("attentes", f.objectif);
         }
-        const existante = liens[uid];
+        const existante = ficheRetenue(m);
         if (existante) {
           await setDoc(doc(db, "fiches", existante.id), donnees, { merge: true });
+          // le numéro donné à l'inscription est ajouté à la fiche existante (sans doublon)
+          if (tel && cle(tel).length >= 8 && !existante.cles.includes(cle(tel))) {
+            await updateDoc(doc(db, "fiches", existante.id), { tels: arrayUnion(tel), cles: arrayUnion(cle(tel)) });
+          }
         } else {
           const id = chiffres(tel) || uid;
           await setDoc(
@@ -106,7 +135,7 @@ export default function AdminPage() {
         viderCache("entreprises");
       }
       await updateDoc(doc(db, "users", uid), { statut });
-      if (statut === "actif" && m) setValides((l) => [donneesDepuisInscription(m, liens[uid]), ...l]);
+      if (statut === "actif" && m) setValides((l) => [donneesDepuisInscription(m, ficheRetenue(m)), ...l]);
       setPending((p) => p.filter((x) => x.uid !== uid));
     } finally {
       setBusy(null);
@@ -189,12 +218,35 @@ export default function AdminPage() {
                     {[m.fiche.activite, m.fiche.quartier, m.fiche.pays].filter(Boolean).join(" · ")}
                   </p>
                 )}
-                {liens[m.uid] ? (
-                  <p className="mt-1 text-xs font-semibold text-[#3C7026]">
-                    Fiche trouvée : {nomComplet(liens[m.uid])}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-xs text-brand-red">Aucune fiche avec ce numéro</p>
+                {(() => {
+                  const f = ficheRetenue(m);
+                  if (f && f.uid && f.uid !== m.uid)
+                    return (
+                      <p className="mt-1 rounded-lg bg-brand-red/10 p-2 text-xs font-semibold text-brand-red">
+                        Attention : la fiche « {nomComplet(f)} » a déjà un compte. C’est probablement un doublon : refusez cette demande.
+                      </p>
+                    );
+                  if (f)
+                    return <p className="mt-1 text-xs font-semibold text-[#3C7026]">Fiche trouvée : {nomComplet(f)}</p>;
+                  return <p className="mt-1 text-xs text-brand-red">Aucune fiche avec ce numéro</p>;
+                })()}
+                {(possibles[m.uid]?.length ?? 0) > 0 && (
+                  <label className="mt-2 block rounded-lg bg-gold-100 p-2 text-xs">
+                    <span className="font-semibold">Fiches ressemblantes (même nom ou même e-mail) :</span>
+                    <select
+                      value={choix[m.uid] ?? ""}
+                      onChange={(e) => setChoix((c) => ({ ...c, [m.uid]: e.target.value }))}
+                      className="mt-1 w-full rounded-lg border border-line bg-white px-2 py-2 text-sm"
+                    >
+                      <option value="">Garder le choix automatique</option>
+                      {possibles[m.uid].map((f) => (
+                        <option key={f.id} value={f.id}>
+                          Lier à : {nomComplet(f)} {f.tels[0] ? `(${f.tels[0]})` : ""}{f.uid ? " · a déjà un compte" : ""}
+                        </option>
+                      ))}
+                      <option value="nouvelle">Créer une nouvelle fiche</option>
+                    </select>
+                  </label>
                 )}
                 {m.reglementAccepteLe ? (
                   <p className="mt-1 text-xs font-semibold text-[#3C7026]">
@@ -214,7 +266,7 @@ export default function AdminPage() {
                 <X size={18} />
               </button>
               <button
-                disabled={busy === m.uid}
+                disabled={busy === m.uid || (!!ficheRetenue(m)?.uid && ficheRetenue(m)?.uid !== m.uid)}
                 onClick={() => decide(m.uid, "actif")}
                 aria-label="Approuver"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500 text-ink hover:bg-gold-600 disabled:opacity-50"
