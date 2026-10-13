@@ -179,21 +179,25 @@ export default function AppShell({
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="bg-ink text-ink-fg">
-        <div className="mx-auto flex max-w-3xl items-start justify-between gap-4 px-5 pb-5 pt-6">
-          <div>
+      <header className="relative overflow-hidden bg-gradient-to-br from-ink via-ink-2 to-[#3B3F45] text-ink-fg">
+        <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-gold-500 blur-3xl animate-glow" />
+        <div className="pointer-events-none absolute -bottom-10 left-6 h-24 w-24 rounded-full bg-brand-blue blur-3xl animate-glow" style={{ animationDelay: "2s" }} />
+        <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 pb-6 pt-6">
+          <div className="min-w-0">
             <h1 className="font-display text-3xl font-bold leading-tight">{title}</h1>
             {subtitle && <p className="mt-1 text-sm text-ink-mute">{subtitle}</p>}
           </div>
-          <Logo size={40} />
+          <div className="flex-none rounded-full p-1 ring-2 ring-gold-500/70 shadow-lg">
+            <Logo size={68} />
+          </div>
         </div>
         <BrandStrip />
       </header>
 
-      <div className="mx-auto max-w-3xl px-5 pb-28 pt-5">{children}</div>
+      <div className="mx-auto max-w-3xl px-5 pb-28 pt-5 animate-fade-up">{children}</div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-20 bg-ink"
+        className="fixed inset-x-0 bottom-0 z-20 rounded-t-3xl bg-ink shadow-[0_-6px_20px_rgba(0,0,0,0.18)]"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="mx-auto flex max-w-3xl">
@@ -203,12 +207,12 @@ export default function AppShell({
               <Link
                 key={href}
                 href={href}
-                className={`flex min-w-0 flex-1 flex-col items-center gap-1 px-0.5 py-2.5 text-[10px] ${
-                  on ? "text-gold-500" : "text-ink-mute"
+                className={`flex min-w-0 flex-1 flex-col items-center gap-1 px-0.5 py-2.5 text-[10px] transition ${
+                  on ? "font-semibold text-gold-500" : "text-ink-mute"
                 }`}
               >
-                <span className="relative">
-                  <Icon size={20} strokeWidth={1.75} />
+                <span className={`relative flex h-8 w-12 items-center justify-center rounded-full transition ${on ? "bg-gold-500/20" : ""}`}>
+                  <Icon size={20} strokeWidth={on ? 2.2 : 1.75} />
                   {href === "/profil" && estAdmin && enAttente > 0 && (
                     <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-red px-1 text-[10px] font-bold text-white">
                       {enAttente}
