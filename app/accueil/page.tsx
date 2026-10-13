@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
-import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping } from "lucide-react";
+import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping, Luggage, PartyPopper } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
@@ -41,6 +41,8 @@ export default function AccueilPage() {
     { href: "/demandes", label: "Demandes", hint: "Je cherche · Je propose", Icon: HandHelping },
     { href: "/annuaire", label: "Membres", hint: actifs !== null ? `${actifs} inscrits dans l’application` : "Annuaire", Icon: Users },
     { href: "/entreprises", label: "Entreprises", hint: "Les activités de la communauté", Icon: Briefcase },
+    { href: "/voyages", label: "Voyageurs & bagages", hint: "Kilos et valises disponibles", Icon: Luggage },
+    { href: "/loisirs", label: "Loisirs", hint: "Sorties, bonnes adresses, vidéos", Icon: PartyPopper },
     { href: "/restaurants", label: "Restaurants", hint: "Menus et réservations", Icon: Utensils },
     { href: "/evenements", label: "Événements", hint: "Bientôt disponible", Icon: CalendarDays },
   ];
