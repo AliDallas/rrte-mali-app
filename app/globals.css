@@ -29,3 +29,11 @@ body {
     @apply rounded-2xl border border-line bg-white;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-floaty,
+  .animate-glow {
+    animation: none !important;
+  }
+}

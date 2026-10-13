@@ -218,6 +218,15 @@ export default function AdminPage() {
           </div>
         </Link>
       )}
+      {isAdmin && (
+        <Link href="/admin/import-contacts" className="card mb-4 flex items-center gap-3 p-4">
+          <FileSpreadsheet className="text-gold-600" size={22} strokeWidth={1.75} />
+          <div className="flex-1">
+            <p className="font-semibold">Importer entreprises et recommandés</p>
+            <p className="text-xs text-muted">Charger le fichier trié (CSV)</p>
+          </div>
+        </Link>
+      )}
       {isAdmin && valides.length > 0 && (
         <div className="mb-5 space-y-3">
           <h2 className="font-display text-lg font-bold">Membres validés : à prévenir et à annoncer</h2>

@@ -1,18 +1,6 @@
-export const CATEGORIES = [
-  "Restauration",
-  "Commerce",
-  "Agriculture & élevage",
-  "BTP & immobilier",
-  "Services aux entreprises",
-  "Santé & bien-être",
-  "Beauté & mode",
-  "Éducation & formation",
-  "Transport & logistique",
-  "Numérique & communication",
-  "Hôtellerie & tourisme",
-  "Événementiel",
-  "Autre",
-];
+import { DOMAINES } from "./domaines";
+
+export const CATEGORIES = DOMAINES;
 
 export interface EntrepriseSaisie {
   type: "proprietaire" | "recommandation";

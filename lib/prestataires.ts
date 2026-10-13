@@ -1,21 +1,6 @@
-export const METIERS = [
-  "Coiffeur / Coiffeuse",
-  "Couturier / Couturière",
-  "Plombier",
-  "Électricien",
-  "Maçon",
-  "Menuisier",
-  "Peintre",
-  "Mécanicien",
-  "Chauffeur",
-  "Traiteur / Cuisinier",
-  "Femme de ménage / Ménage",
-  "Photographe / Vidéaste",
-  "Informatique / Téléphonie",
-  "Santé / Bien-être",
-  "Juridique / Administratif",
-  "Autre",
-];
+import { DOMAINES } from "./domaines";
+
+export const METIERS = DOMAINES;
 
 export interface Prestataire {
   id: string;
@@ -62,5 +47,5 @@ export function moyenne(p: Pick<Prestataire, "nbAvis" | "sommeNotes">): number {
 
 /** Une recommandation en attente n'est visible que de son auteur et des administrateurs. */
 export function visiblePour(p: Pick<Prestataire, "statut" | "ownerUid">, uid?: string, admin?: boolean): boolean {
-  return p.statut === "valide" || !!admin || (!!uid && p.ownerUid === uid);
+  return p.statut !== "en_attente" || !!admin || (!!uid && p.ownerUid === uid);
 }
