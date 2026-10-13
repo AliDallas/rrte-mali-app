@@ -12,6 +12,7 @@ import CopierPresentation from "@/components/CopierPresentation";
 import { donneesDepuisFiche } from "@/lib/presentation";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
+import SignalerBouton from "@/components/SignalerBouton";
 import { Fiche, chiffres, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
 import { Entreprise, entrepriseDepuisDoc } from "@/lib/entreprises";
 
@@ -142,6 +143,10 @@ export default function FicheDetailPage() {
             {!fiche.activite && !fiche.competences && !fiche.anciennete && !fiche.attentes && (
               <p className="text-sm text-muted">Ce membre n’a pas encore complété sa fiche.</p>
             )}
+          </div>
+
+          <div className="flex justify-center">
+            <SignalerBouton cibleType="membre" cibleId={fiche.id} cibleNom={nomComplet(fiche)} cibleUid={fiche.uid ?? ""} libelle="Signaler ce membre" />
           </div>
 
           {profile?.role === "admin" && (

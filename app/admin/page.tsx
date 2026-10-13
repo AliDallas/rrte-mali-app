@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { Check, FileSpreadsheet, ShieldCheck, X } from "lucide-react";
+import { Check, FileSpreadsheet, Flag, ShieldCheck, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
@@ -215,6 +215,15 @@ export default function AdminPage() {
           <div className="flex-1">
             <p className="font-semibold">Importer l’annuaire</p>
             <p className="text-xs text-muted">Charger le fichier des membres (CSV)</p>
+          </div>
+        </Link>
+      )}
+      {isAdmin && (
+        <Link href="/admin/signalements" className="card mb-4 flex items-center gap-3 p-4">
+          <Flag className="text-brand-red" size={22} strokeWidth={1.75} />
+          <div className="flex-1">
+            <p className="font-semibold">Signalements</p>
+            <p className="text-xs text-muted">Membres ou contenus signalés</p>
           </div>
         </Link>
       )}

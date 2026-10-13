@@ -143,6 +143,12 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
+    // Signalements de comportements : un membre actif peut en créer (un par cible), seuls les administrateurs les lisent
+    match /signalements/{sid} {
+      allow create: if isActiveMember() && request.resource.data.auteurUid == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /businesses/{bizId} {
       allow read: if true;
       allow create: if isActiveMember();

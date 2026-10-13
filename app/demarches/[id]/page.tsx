@@ -8,6 +8,7 @@ import { ChevronLeft, ExternalLink, MapPin, Pencil, Trash2, Clock, Wallet } from
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
+import SignalerBouton from "@/components/SignalerBouton";
 import { Demarche, demarcheDepuisDoc, lignes } from "@/lib/demarches";
 import { dateFr } from "@/lib/voyages";
 import { plateforme } from "@/lib/liens";
@@ -161,6 +162,10 @@ export default function DemarcheDetailPage() {
           <Link href="/demandes/nouvelle" className="btn-gold">
             Poser une question aux membres
           </Link>
+
+          <div className="flex justify-center">
+            <SignalerBouton cibleType="fiche" cibleId={d.id} cibleNom={`Fiche « ${d.titre} »`} cibleUid={d.ownerUid} libelle="Signaler cette annonce ou ce contenu" />
+          </div>
 
           <div className="flex items-center justify-center gap-6">
             {peutModifier && (

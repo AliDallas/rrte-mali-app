@@ -8,6 +8,7 @@ import { ChevronLeft, ExternalLink, MapPin, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
+import SignalerBouton from "@/components/SignalerBouton";
 import { Loisir, lirePhotosLoisir, loisirDepuisDoc } from "@/lib/loisirs";
 import { idYoutube, plateforme } from "@/lib/liens";
 import { viderCache } from "@/lib/cache";
@@ -93,6 +94,10 @@ export default function LoisirDetailPage() {
               ))}
             </div>
           )}
+
+          <div className="flex justify-center">
+            <SignalerBouton cibleType="fiche" cibleId={l.id} cibleNom={`Fiche « ${l.titre} »`} cibleUid={l.ownerUid} libelle="Signaler cette annonce ou ce contenu" />
+          </div>
 
           {peutGerer &&
             (confirm ? (

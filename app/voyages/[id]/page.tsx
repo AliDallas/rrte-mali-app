@@ -8,6 +8,7 @@ import { ChevronLeft, MessageCircle, Phone, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
+import SignalerBouton from "@/components/SignalerBouton";
 import { Voyage, dateFr, expire, resumeTarif, voyageDepuisDoc } from "@/lib/voyages";
 import { chiffres } from "@/lib/fiches";
 import { viderCache } from "@/lib/cache";
@@ -111,6 +112,10 @@ export default function VoyageDetailPage() {
             RRTE met les membres en relation sans être responsable du transport. Ne prenez jamais un colis fermé dont vous ignorez le contenu, et
             convenez clairement du prix et de la remise à l’arrivée.
           </p>
+
+          <div className="flex justify-center">
+            <SignalerBouton cibleType="annonce" cibleId={v.id} cibleNom={`Annonce de ${v.ownerNom}`} cibleUid={v.ownerUid} libelle="Signaler cette annonce ou ce contenu" />
+          </div>
 
           {peutGerer &&
             (confirm ? (

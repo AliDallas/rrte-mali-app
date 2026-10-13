@@ -11,6 +11,7 @@ import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
+import SignalerBouton from "@/components/SignalerBouton";
 import { Demande, Reponse, demandeDepuisDoc, ilYa, motsCles, reponseDepuisDoc } from "@/lib/demandes";
 import { Fiche, chiffres, cle, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
 import { METIERS, Prestataire, prestataireDepuisDoc } from "@/lib/prestataires";
@@ -274,6 +275,9 @@ export default function DemandeDetailPage() {
                     <p className="truncate text-sm font-semibold">{r.auteurNom}</p>
                     <p className="text-xs text-muted">{ilYa(r.createdAt)}</p>
                   </div>
+                  {r.auteurUid !== user?.uid && (
+                    <SignalerBouton cibleType="reponse" cibleId={`${id}_${r.id}`} cibleNom={`Réponse de ${r.auteurNom}`} cibleUid={r.auteurUid} libelle="" className="p-1" />
+                  )}
                   {(r.auteurUid === user?.uid || profile?.role === "admin") && (
                     <button onClick={() => supprimerReponse(r.id)} aria-label="Supprimer" className="text-muted">
                       <Trash2 size={16} />
