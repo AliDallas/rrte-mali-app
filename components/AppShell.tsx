@@ -9,11 +9,12 @@ import {
   Home,
   Users,
   Briefcase,
-  HandHelping,
   User,
   Utensils,
   ThumbsUp,
   LogIn,
+  CalendarDays,
+  ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import Logo from "./Logo";
@@ -24,7 +25,7 @@ const MEMBER_NAV = [
   { href: "/annuaire", label: "Membres", Icon: Users },
   { href: "/entreprises", label: "Entreprises", Icon: Briefcase },
   { href: "/prestataires", label: "Recommandés", Icon: ThumbsUp },
-  { href: "/demandes", label: "Demandes", Icon: HandHelping },
+  { href: "/evenements", label: "Événements", Icon: CalendarDays },
   { href: "/profil", label: "Profil", Icon: User },
 ];
 
@@ -186,7 +187,17 @@ export default function AppShell({
         <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-gold-500 blur-3xl animate-glow" />
         <div className="pointer-events-none absolute -bottom-10 left-6 h-24 w-24 rounded-full bg-brand-blue blur-3xl animate-glow" style={{ animationDelay: "2s" }} />
         <div className="relative mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 pb-6 pt-6">
-          <div className="min-w-0">
+          {pathname !== "/accueil" && pathname !== "/" && (
+            <button
+              type="button"
+              aria-label="Retour"
+              onClick={() => (window.history.length > 1 ? router.back() : router.push(user ? "/accueil" : "/"))}
+              className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-white/10 text-ink-fg transition active:scale-90"
+            >
+              <ChevronLeft size={24} />
+            </button>
+          )}
+          <div className="min-w-0 flex-1">
             <h1 className="font-display text-3xl font-bold leading-tight">{title}</h1>
             {subtitle && <p className="mt-1 text-sm text-ink-mute">{subtitle}</p>}
           </div>

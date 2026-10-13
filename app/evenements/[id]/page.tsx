@@ -136,10 +136,10 @@ export default function EvenementDetailPage() {
           )}
 
           {photos.length > 0 && (
-            <div className="flex snap-x gap-2 overflow-x-auto">
+            <div className={`flex snap-x items-start gap-2 overflow-x-auto ${photos.length === 1 ? "justify-center" : ""}`}>
               {photos.map((p, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={p} alt="" className="h-60 w-[85%] flex-none snap-center rounded-2xl object-cover" />
+                <img key={i} src={p} alt="" className="h-auto max-h-[75vh] w-auto max-w-full flex-none snap-center rounded-2xl object-contain" style={{ maxWidth: photos.length === 1 ? "100%" : "88%" }} />
               ))}
             </div>
           )}
@@ -167,9 +167,11 @@ export default function EvenementDetailPage() {
                 <Wallet size={20} className="text-gold-700" strokeWidth={1.75} /> {ev.participation}
               </div>
             )}
-            <div className="flex items-center gap-3 p-4">
-              <Users size={20} className="text-gold-700" strokeWidth={1.75} /> {ev.attendees.length} inscrit{ev.attendees.length > 1 ? "s" : ""}
-            </div>
+            {isUpcoming(ev.date) && (
+              <div className="flex items-center gap-3 p-4">
+                <Users size={20} className="text-gold-700" strokeWidth={1.75} /> {ev.attendees.length} inscrit{ev.attendees.length > 1 ? "s" : ""}
+              </div>
+            )}
           </div>
 
           {ev.description && (

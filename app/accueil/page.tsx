@@ -38,18 +38,19 @@ export default function AccueilPage() {
   }, [profile, isAdmin]);
 
   const tiles = [
-    { href: "/demandes", label: "Demandes", hint: "Je cherche · Je propose", Icon: HandHelping, fond: "from-[#E8604C] to-[#B5321F]", grand: true },
+    { href: "/evenements", label: "Événements", hint: "RRTE et entre membres", Icon: CalendarDays, fond: "from-[#E8604C] to-[#B5321F]", grand: true },
     { href: "/demarches", label: "Démarches & papiers", hint: "État civil, mariage, passeport, visas", Icon: FileText, fond: "from-[#8A5CC0] to-[#5B3190]", grand: true },
     { href: "/voyages", label: "Voyageurs & bagages", hint: "Kilos et valises", Icon: Luggage, fond: "from-[#2A92D0] to-[#0F5A8C]", grand: true },
-    { href: "/annuaire", label: "Membres", hint: actifs !== null ? `${actifs} inscrits` : "Annuaire", Icon: Users, fond: "from-[#F6C24A] to-[#D99A10]" },
+    { href: "/demandes", label: "Demandes", hint: "Je cherche · Je propose", Icon: HandHelping, fond: "from-[#F6C24A] to-[#D99A10]" },
+    { href: "/annuaire", label: "Membres", hint: actifs !== null ? `${actifs} inscrits` : "Annuaire", Icon: Users, fond: "from-[#2FB5A8] to-[#1B7F76]" },
     { href: "/entreprises", label: "Entreprises", hint: "Activités des membres", Icon: Briefcase, fond: "from-[#7DB85F] to-[#4A8030]" },
     { href: "/prestataires", label: "Recommandés", hint: "Contacts de confiance", Icon: ThumbsUp, fond: "from-[#5C6168] to-[#26292D]" },
     { href: "/loisirs", label: "Loisirs", hint: "Sorties et bonnes adresses", Icon: PartyPopper, fond: "from-[#EE8A6B] to-[#D84A38]" },
     { href: "/restaurants", label: "Restaurants", hint: "Menus et réservations", Icon: Utensils, fond: "from-[#4FA9DD] to-[#1A7AB8]" },
-    { href: "/evenements", label: "Événements", hint: "RRTE et entre membres", Icon: CalendarDays, fond: "from-[#8FC46F] to-[#66A04A]" },
   ];
 
   const actions = [
+    { href: "/evenements/proposer", label: "Événement", couleur: "bg-[#5B3190]" },
     { href: "/demandes/nouvelle", label: "Demande", couleur: "bg-brand-red" },
     { href: "/voyages/nouveau", label: "Voyage", couleur: "bg-brand-blue" },
     { href: "/loisirs/nouveau", label: "Loisir", couleur: "bg-brand-green" },

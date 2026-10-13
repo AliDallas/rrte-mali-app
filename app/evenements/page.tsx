@@ -164,9 +164,13 @@ export default function EvenementsPage() {
               </Link>
               {ev.statut === "en_attente" && <p className="bg-brand-red/10 px-4 py-2 text-xs font-semibold text-brand-red">En attente de validation</p>}
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="flex items-center gap-1.5 text-sm text-muted">
-                  <Users size={14} /> {ev.attendees.length} inscrit{ev.attendees.length > 1 ? "s" : ""}
-                </span>
+                {isUpcoming(ev.date) ? (
+                  <span className="flex items-center gap-1.5 text-sm text-muted">
+                    <Users size={14} /> {ev.attendees.length} inscrit{ev.attendees.length > 1 ? "s" : ""}
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted">Événement passé</span>
+                )}
                 {isUpcoming(ev.date) && ev.statut !== "en_attente" && (
                   <button
                     disabled={busy === ev.id}
