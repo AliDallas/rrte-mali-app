@@ -132,6 +132,17 @@ service cloud.firestore {
       }
     }
 
+    // Démarches & papiers : guides partagés (état civil, passeport, visas…), relus par un administrateur
+    match /demarches/{did} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.statut == 'en_attente');
+      allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+        resource.data.statut == 'en_attente' && request.resource.data.statut == 'en_attente' &&
+        request.resource.data.ownerUid == resource.data.ownerUid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+    }
+
     match /businesses/{bizId} {
       allow read: if true;
       allow create: if isActiveMember();
