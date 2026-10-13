@@ -46,7 +46,7 @@ export default function AccueilPage() {
     { href: "/prestataires", label: "Recommandés", hint: "Contacts de confiance", Icon: ThumbsUp, fond: "from-[#5C6168] to-[#26292D]" },
     { href: "/loisirs", label: "Loisirs", hint: "Sorties et bonnes adresses", Icon: PartyPopper, fond: "from-[#EE8A6B] to-[#D84A38]" },
     { href: "/restaurants", label: "Restaurants", hint: "Menus et réservations", Icon: Utensils, fond: "from-[#4FA9DD] to-[#1A7AB8]" },
-    { href: "/evenements", label: "Événements", hint: "Rendez-vous RRTE", Icon: CalendarDays, fond: "from-[#8FC46F] to-[#66A04A]" },
+    { href: "/evenements", label: "Événements", hint: "RRTE et entre membres", Icon: CalendarDays, fond: "from-[#8FC46F] to-[#66A04A]" },
   ];
 
   const actions = [

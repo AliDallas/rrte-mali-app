@@ -167,10 +167,25 @@ service cloud.firestore {
     // inscription : un membre actif peut modifier uniquement la liste "attendees"
     match /events/{eventId} {
       allow read: if isActiveMember();
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (isActiveMember() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees']));
-      allow delete: if isAdmin();
+      // événements RRTE : créés par les administrateurs ; événements entre membres : proposés par un membre
+      // actif (en attente de validation, sauf si c'est un administrateur)
+      allow create: if isAdmin() || (isActiveMember() &&
+        request.resource.data.created_by == request.auth.uid &&
+        request.resource.data.categorie == 'membres' &&
+        request.resource.data.statut == 'en_attente');
+      allow update: if isAdmin() ||
+        (isActiveMember() && resource.data.created_by == request.auth.uid &&
+          resource.data.get('statut', 'valide') == 'en_attente' && request.resource.data.statut == 'en_attente' &&
+          request.resource.data.created_by == resource.data.created_by) ||
+        (isActiveMember() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees']));
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.created_by == request.auth.uid);
+
+      match /medias/{mediaId} {
+        allow read: if isActiveMember();
+        allow write: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/events/$(eventId)).data.created_by == request.auth.uid);
+      }
     }
 
     // Offres d'emploi / Services B2B : réservé aux membres actifs
