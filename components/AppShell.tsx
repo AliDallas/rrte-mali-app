@@ -114,6 +114,31 @@ export default function AppShell({
     );
   }
 
+  if (user && profile?.statut === "inscrit") {
+    return (
+      <main className="flex min-h-screen flex-col bg-ink text-ink-fg">
+        <div className="flex flex-1 flex-col items-center justify-center gap-5 px-8 text-center">
+          <Logo size={96} />
+          <h1 className="font-display text-2xl font-bold">Inscription validée, merci !</h1>
+          <p className="max-w-sm text-ink-mute">
+            Votre fiche est bien enregistrée. L’application est pour l’instant en phase de test avec un petit groupe de
+            travail : son utilisation complète sera ouverte à tous les membres un peu plus tard. Nous vous préviendrons
+            dans le groupe WhatsApp.
+          </p>
+          <div className="w-full max-w-xs space-y-3">
+            <button className="btn-gold" onClick={() => window.location.reload()}>
+              Vérifier à nouveau
+            </button>
+            <button className="btn-outline" onClick={logout}>
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+        <BrandStrip />
+      </main>
+    );
+  }
+
   if (user && (profile?.statut === "en_attente" || profile?.statut === "refuse" || profile?.statut === "radie")) {
     const refuse = profile?.statut === "refuse" || profile?.statut === "radie";
     const radie = profile?.statut === "radie";

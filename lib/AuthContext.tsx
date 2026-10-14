@@ -26,7 +26,7 @@ export interface MemberProfile {
   reglementAccepteLe?: number;
   messageRefus?: string;
   role: "member" | "admin";
-  statut: "en_attente" | "actif" | "refuse" | "radie";
+  statut: "en_attente" | "inscrit" | "actif" | "refuse" | "radie";
   createdAt?: unknown;
 }
 

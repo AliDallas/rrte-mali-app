@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { Check, FileSpreadsheet, Flag, ShieldCheck, X } from "lucide-react";
+import { Check, FileSpreadsheet, Flag, ShieldCheck, UserCheck, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
@@ -28,13 +28,18 @@ export default function AdminPage() {
   const [recoAttente, setRecoAttente] = useState<Prestataire[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-  const [valides, setValides] = useState<DonneesPresentation[]>([]);
+  const [valides, setValides] = useState<(DonneesPresentation & { enTest?: boolean })[]>([]);
+  const [inscrits, setInscrits] = useState<MemberProfile[]>([]);
   const isAdmin = profile?.role === "admin";
 
   const load = useCallback(async () => {
     const snap = await getDocs(query(collection(db, "users"), where("statut", "==", "en_attente")));
-    const list = snap.docs.map((d) => d.data() as MemberProfile);
-    setPending(list);
+    const attente = snap.docs.map((d) => d.data() as MemberProfile);
+    const snapInscrits = await getDocs(query(collection(db, "users"), where("statut", "==", "inscrit")));
+    const sansAcces = snapInscrits.docs.map((d) => d.data() as MemberProfile);
+    setPending(attente);
+    setInscrits(sansAcces);
+    const list = [...attente, ...sansAcces];
     // rapprochement automatique avec l'annuaire importé, par numéro de téléphone
     const trouves: Record<string, Fiche> = {};
     await Promise.all(
@@ -110,10 +115,10 @@ export default function AdminPage() {
     }
   }
 
-  async function decide(uid: string, statut: "actif" | "refuse") {
+  async function decide(uid: string, statut: "actif" | "refuse" | "inscrit") {
     setBusy(uid);
     try {
-      const m = pending.find((x) => x.uid === uid);
+      const m = pending.find((x) => x.uid === uid) ?? inscrits.find((x) => x.uid === uid);
       if (statut === "actif" && m) {
         // la fiche saisie à l'inscription alimente l'annuaire (sans créer de doublon)
         const f = m.fiche;
@@ -168,8 +173,10 @@ export default function AdminPage() {
         viderCache("entreprises");
       }
       await updateDoc(doc(db, "users", uid), { statut });
+      if (statut === "inscrit" && m) setValides((l) => [{ ...donneesDepuisInscription(m, ficheRetenue(m)), enTest: true }, ...l]);
       if (statut === "actif" && m) setValides((l) => [donneesDepuisInscription(m, ficheRetenue(m)), ...l]);
       setPending((p) => p.filter((x) => x.uid !== uid));
+      setInscrits((l) => (statut === "inscrit" && m ? [m, ...l.filter((x) => x.uid !== uid)] : l.filter((x) => x.uid !== uid)));
     } finally {
       setBusy(null);
     }
@@ -245,7 +252,14 @@ export default function AdminPage() {
               <div>
                 <p className="text-sm font-semibold">1. Prévenir la personne</p>
                 <div className="mt-1">
-                  <MessagePersonne tel={v.tel} message={texteAcceptation(v.prenom)} />
+                  <MessagePersonne
+                    tel={v.tel}
+                    message={
+                      v.enTest
+                        ? `Bonjour${v.prenom ? ` ${v.prenom}` : ""},\n\nVotre inscription RRTE est validée, merci ! Vous êtes ajouté(e) au groupe WhatsApp. L’application est pour l’instant en phase de test avec un petit groupe de travail : son utilisation complète sera ouverte à tous les membres plus tard, et nous vous préviendrons dans le groupe.\n\nL’équipe RRTE`
+                        : texteAcceptation(v.prenom)
+                    }
+                  />
                 </div>
               </div>
               <div>
@@ -264,6 +278,10 @@ export default function AdminPage() {
         <p className="card p-6 text-center text-muted">Aucune demande en attente.</p>
       ) : (
         <div className="space-y-3">
+          <p className="rounded-xl bg-gold-100 p-3 text-xs text-ink">
+            <b>Coche pleine</b> : accès complet à l’application. <b>Coche avec silhouette</b> : validé pour le groupe WhatsApp
+            seulement, accès à l’application plus tard (phase de test).
+          </p>
           {pending.map((m) => (
             <div key={m.uid} className="card flex flex-wrap items-start gap-3 p-4">
               <Avatar prenom={m.prenom} nom={m.nom} size={44} photo={m.photo} />
@@ -327,6 +345,15 @@ export default function AdminPage() {
               </button>
               <button
                 disabled={busy === m.uid || (!!ficheRetenue(m)?.uid && ficheRetenue(m)?.uid !== m.uid)}
+                onClick={() => decide(m.uid, "inscrit")}
+                aria-label="Valider pour le groupe WhatsApp, sans accès à l’application"
+                title="Valider pour WhatsApp seulement (accès à l’application plus tard)"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gold-500 text-gold-700 hover:bg-gold-100 disabled:opacity-50"
+              >
+                <UserCheck size={18} />
+              </button>
+              <button
+                disabled={busy === m.uid || (!!ficheRetenue(m)?.uid && ficheRetenue(m)?.uid !== m.uid)}
                 onClick={() => decide(m.uid, "actif")}
                 aria-label="Approuver"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500 text-ink hover:bg-gold-600 disabled:opacity-50"
@@ -368,6 +395,35 @@ export default function AdminPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+      {isAdmin && loaded && inscrits.length > 0 && (
+        <div className="mt-6">
+          <h2 className="mb-1 font-display text-lg font-bold">Inscrits sans accès à l’application ({inscrits.length})</h2>
+          <p className="mb-3 text-xs text-muted">
+            Validés pour le groupe WhatsApp pendant la phase de test. Appuyez sur la coche pour leur ouvrir l’application.
+          </p>
+          <div className="space-y-3">
+            {inscrits.map((m) => (
+              <div key={m.uid} className="card flex items-center gap-3 p-4">
+                <Avatar prenom={m.prenom} nom={m.nom} size={40} photo={m.photo} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">
+                    {m.prenom} {m.nom}
+                  </p>
+                  <p className="truncate text-sm text-muted">{m.telephone || m.email}</p>
+                </div>
+                <button
+                  disabled={busy === m.uid || (!!ficheRetenue(m)?.uid && ficheRetenue(m)?.uid !== m.uid)}
+                  onClick={() => decide(m.uid, "actif")}
+                  aria-label="Ouvrir l’accès à l’application"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500 text-ink hover:bg-gold-600 disabled:opacity-50"
+                >
+                  <Check size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {isAdmin && loaded && entAttente.length > 0 && (
