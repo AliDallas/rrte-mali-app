@@ -28,7 +28,7 @@ export interface EventItem {
 
 export const TYPES_EVENEMENT_MEMBRES = [
   "Repas & sortie entre amis",
-  "Vide-dressing & vente",
+  "Activité",
   "Atelier & formation",
   "Association & solidarité",
   "Sport & détente",

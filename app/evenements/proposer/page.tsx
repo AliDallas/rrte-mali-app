@@ -24,6 +24,7 @@ export default function ProposerEvenementPage() {
   const [orgType, setOrgType] = useState<"membre" | "association">("membre");
   const [orgNom, setOrgNom] = useState("");
   const [type, setType] = useState("");
+  const [typeAutre, setTypeAutre] = useState("");
   const [date, setDate] = useState("");
   const [heure, setHeure] = useState("");
   const [lieu, setLieu] = useState("");
@@ -67,7 +68,7 @@ export default function ProposerEvenementPage() {
         categorie: "membres",
         organisateurType: orgType,
         organisateurNom: orgType === "association" ? orgNom.trim() : nomPersonne,
-        typeEvenement: type,
+        typeEvenement: type === "Autre" ? typeAutre.trim() || "Autre" : type,
         participation: participation.trim(),
         contact: contact.trim(),
         liens: propres,
@@ -87,13 +88,13 @@ export default function ProposerEvenementPage() {
   }
 
   return (
-    <AppShell title="Proposer un événement" subtitle="Repas, vide-dressing, atelier, association…">
+    <AppShell title="Proposer un événement" subtitle="Repas, atelier, activité, association…">
       <form onSubmit={submit} className="space-y-4">
         {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</div>}
         <div className="card space-y-3 p-5">
           <label className="block text-sm font-medium">
             Titre
-            <input required value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Ex. Vide-dressing entre sœurs" className={input} />
+            <input required value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Ex. Atelier cuisine" className={input} />
           </label>
           <label className="block text-sm font-medium">
             Type d’événement
@@ -104,6 +105,12 @@ export default function ProposerEvenementPage() {
               ))}
             </select>
           </label>
+          {type === "Autre" && (
+            <label className="block text-sm font-medium">
+              Précisez le type d’événement
+              <input required value={typeAutre} onChange={(e) => setTypeAutre(e.target.value)} placeholder="Ex. Brocante, tournoi, conférence…" className={input} />
+            </label>
+          )}
           <div>
             <p className="text-sm font-medium">Organisé par</p>
             <div className="mt-1.5 grid grid-cols-2 gap-2 text-sm">
