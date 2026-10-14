@@ -185,6 +185,10 @@ service cloud.firestore {
         allow read: if isActiveMember();
         allow write: if isAdmin() || (isActiveMember() &&
           get(/databases/$(database)/documents/events/$(eventId)).data.created_by == request.auth.uid);
+        // photos de la galerie ajoutées par les membres (une photo allégée, moins de 400 Ko)
+        allow create: if isActiveMember() && request.resource.data.kind == 'galerie' &&
+          request.resource.data.auteurUid == request.auth.uid && request.resource.data.data.size() < 400000;
+        allow delete: if isActiveMember() && resource.data.get('auteurUid', '') == request.auth.uid;
       }
     }
 

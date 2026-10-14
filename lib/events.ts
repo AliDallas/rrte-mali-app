@@ -1,5 +1,5 @@
 import { format, parseISO, isValid } from "date-fns";
-import { QueryDocumentSnapshot, collection, doc, getDoc, getDocs, limit, orderBy, query, setDoc, startAfter } from "firebase/firestore";
+import { QueryDocumentSnapshot, collection, doc, getCountFromServer, getDoc, getDocs, limit, orderBy, query, setDoc, startAfter } from "firebase/firestore";
 import { db } from "./firebase";
 import { reduireDataUrl } from "./image";
 import { fr } from "date-fns/locale";
@@ -98,15 +98,28 @@ export function isUpcoming(date: string): boolean {
 export interface PhotoGalerie {
   id: string;
   data: string;
+  auteurUid: string;
+  auteurNom: string;
 }
 
 export const MAX_PHOTOS_GALERIE = 60;
 
 /** Une photo de galerie = un petit document à part (limite d'1 Mo par document dans Firestore). */
-export async function ajouterPhotoGalerie(eventId: string, dataUrl: string, ordre: number): Promise<string> {
+export async function ajouterPhotoGalerie(
+  eventId: string,
+  dataUrl: string,
+  ordre: number,
+  auteurUid = "",
+  auteurNom = ""
+): Promise<string> {
   const id = `g${ordre}`;
-  await setDoc(doc(db, "events", eventId, "medias", id), { kind: "galerie", ordre, data: dataUrl });
+  await setDoc(doc(db, "events", eventId, "medias", id), { kind: "galerie", ordre, data: dataUrl, auteurUid, auteurNom });
   return id;
+}
+
+export async function compterGalerie(eventId: string): Promise<number> {
+  const s = await getCountFromServer(query(collection(db, "events", eventId, "medias"), orderBy("ordre", "asc")));
+  return s.data().count;
 }
 
 export async function lireGalerie(
@@ -117,7 +130,9 @@ export async function lireGalerie(
   const base = collection(db, "events", eventId, "medias");
   const snap = await getDocs(apres ? query(base, orderBy("ordre", "asc"), startAfter(apres), limit(taille)) : query(base, orderBy("ordre", "asc"), limit(taille)));
   return {
-    photos: snap.docs.map((d) => ({ id: d.id, data: String(d.data().data ?? "") })).filter((p) => p.data),
+    photos: snap.docs
+      .map((d) => ({ id: d.id, data: String(d.data().data ?? ""), auteurUid: String(d.data().auteurUid ?? ""), auteurNom: String(d.data().auteurNom ?? "") }))
+      .filter((p) => p.data),
     dernier: snap.docs[snap.docs.length - 1],
     fini: snap.docs.length < taille,
   };

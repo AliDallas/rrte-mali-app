@@ -9,7 +9,7 @@ import AppShell from "@/components/AppShell";
 import SignalerBouton from "@/components/SignalerBouton";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { EventItem, MAX_PHOTOS_GALERIE, PhotoGalerie, ajouterPhotoGalerie, eventDepuisDoc, isUpcoming, lireGalerie, lirePhotosEvent, longDate } from "@/lib/events";
+import { EventItem, MAX_PHOTOS_GALERIE, PhotoGalerie, ajouterPhotoGalerie, eventDepuisDoc, isUpcoming, compterGalerie, lireGalerie, lirePhotosEvent, longDate } from "@/lib/events";
 import { reduireImage } from "@/lib/image";
 import { chiffres } from "@/lib/fiches";
 import { idYoutube, plateforme } from "@/lib/liens";
@@ -27,6 +27,8 @@ export default function EvenementDetailPage() {
   const [finGalerie, setFinGalerie] = useState(true);
   const [voir, setVoir] = useState<string | null>(null);
   const [envoiPhotos, setEnvoiPhotos] = useState("");
+  const [totalPhotos, setTotalPhotos] = useState(0);
+  const [messagePhotos, setMessagePhotos] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isAdmin = profile?.role === "admin";
@@ -39,6 +41,7 @@ export default function EvenementDetailPage() {
         setEv(eventDepuisDoc(snap.id, snap.data()));
         setState("ok");
         lirePhotosEvent(id).then(setPhotos);
+        compterGalerie(id).then(setTotalPhotos).catch(() => undefined);
         lireGalerie(id)
           .then((g) => {
             setGalerie(g.photos);
@@ -71,21 +74,32 @@ export default function EvenementDetailPage() {
   }
 
   async function ajouterPhotos(e: React.ChangeEvent<HTMLInputElement>) {
-    const fichiers = Array.from(e.target.files ?? []);
+    let fichiers = Array.from(e.target.files ?? []);
     e.target.value = "";
-    if (!id || fichiers.length === 0) return;
+    if (!id || !user || !profile || fichiers.length === 0) return;
+    setMessagePhotos("");
+    const reste = Math.max(0, MAX_PHOTOS_GALERIE - totalPhotos);
+    if (fichiers.length > reste) {
+      setMessagePhotos(reste === 0 ? `La galerie est pleine (${MAX_PHOTOS_GALERIE} photos).` : `Seules ${reste} photo${reste > 1 ? "s" : ""} ont pu être ajoutée${reste > 1 ? "s" : ""} (limite de ${MAX_PHOTOS_GALERIE}).`);
+      fichiers = fichiers.slice(0, reste);
+    }
+    if (fichiers.length === 0) return;
     const base = Date.now();
     const ajoutees: PhotoGalerie[] = [];
+    const nom = `${profile.prenom} ${profile.nom}`.trim();
     try {
       for (let i = 0; i < fichiers.length; i++) {
         setEnvoiPhotos(`Envoi : ${i + 1} / ${fichiers.length}`);
         const data = await reduireImage(fichiers[i], 720, 0.65);
-        const pid = await ajouterPhotoGalerie(id, data, base + i);
-        ajoutees.push({ id: pid, data });
+        const pid = await ajouterPhotoGalerie(id, data, base + i, user.uid, nom);
+        ajoutees.push({ id: pid, data, auteurUid: user.uid, auteurNom: nom });
       }
+    } catch {
+      setMessagePhotos("Une photo n’a pas pu être envoyée. Réessayez.");
     } finally {
       setEnvoiPhotos("");
       setGalerie((x) => [...x, ...ajoutees]);
+      setTotalPhotos((n) => n + ajoutees.length);
     }
   }
 
@@ -93,6 +107,7 @@ export default function EvenementDetailPage() {
     if (!id) return;
     await deleteDoc(doc(db, "events", id, "medias", pid));
     setGalerie((x) => x.filter((p) => p.id !== pid));
+    setTotalPhotos((n) => Math.max(0, n - 1));
     setVoir(null);
   }
 
@@ -110,6 +125,9 @@ export default function EvenementDetailPage() {
 
   const going = !!(ev && user && ev.attendees.includes(user.uid));
   const membres = ev?.categorie === "membres";
+  const passe = !!ev && !isUpcoming(ev.date);
+  const peutAjouter = !!ev && ev.statut !== "en_attente" && (isAdmin || passe);
+  const photoOuverte = galerie.find((p) => p.id === voir);
   const peutSupprimer = !!ev && (isAdmin || ev.created_by === user?.uid);
   const videos = (ev?.liens ?? []).map(idYoutube).filter(Boolean);
 
@@ -205,7 +223,7 @@ export default function EvenementDetailPage() {
             </div>
           )}
 
-          {(galerie.length > 0 || (isAdmin && ev.categorie === "rrte")) && (
+          {(galerie.length > 0 || peutAjouter) && (
             <div>
               <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Photos de l’événement</h2>
               {galerie.length > 0 && (
@@ -223,11 +241,17 @@ export default function EvenementDetailPage() {
                   Voir plus de photos
                 </button>
               )}
-              {isAdmin && galerie.length < MAX_PHOTOS_GALERIE && (
-                <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-line px-4 py-3 text-sm text-muted">
-                  <ImagePlus size={18} /> {envoiPhotos || "Ajouter des photos (plusieurs à la fois)"}
+              {peutAjouter && totalPhotos < MAX_PHOTOS_GALERIE && (
+                <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-gold-500 bg-gold-100/40 px-4 py-3 text-sm font-semibold text-gold-700">
+                  <ImagePlus size={18} /> {envoiPhotos || "Ajouter mes photos (plusieurs à la fois)"}
                   <input type="file" accept="image/*" multiple className="hidden" onChange={ajouterPhotos} disabled={!!envoiPhotos} />
                 </label>
+              )}
+              {peutAjouter && (
+                <p className="mt-2 text-xs text-muted">
+                  {totalPhotos} / {MAX_PHOTOS_GALERIE} photos. Photos uniquement, pas de vidéo.
+                  {messagePhotos && <span className="block font-semibold text-brand-red">{messagePhotos}</span>}
+                </p>
               )}
             </div>
           )}
@@ -238,18 +262,20 @@ export default function EvenementDetailPage() {
                 <X size={28} />
               </button>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={galerie.find((p) => p.id === voir)?.data} alt="" className="max-h-[80vh] max-w-full rounded-xl object-contain" />
-              {isAdmin && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    retirerPhoto(voir);
-                  }}
-                  className="mt-4 flex items-center gap-2 text-sm text-white/80"
-                >
-                  <Trash2 size={15} /> Retirer cette photo
-                </button>
-              )}
+              <img src={photoOuverte?.data} alt="" className="max-h-[75vh] max-w-full rounded-xl object-contain" />
+              {photoOuverte?.auteurNom && <p className="mt-3 text-sm text-white/70">Photo ajoutée par {photoOuverte.auteurNom}</p>}
+              <div className="mt-3 flex items-center gap-6 text-white/80" onClick={(e) => e.stopPropagation()}>
+                {(isAdmin || (!!photoOuverte && photoOuverte.auteurUid === user?.uid)) && (
+                  <button onClick={() => retirerPhoto(voir)} className="flex items-center gap-2 text-sm">
+                    <Trash2 size={15} /> Retirer cette photo
+                  </button>
+                )}
+                {photoOuverte && photoOuverte.auteurUid && photoOuverte.auteurUid !== user?.uid && (
+                  <span className="text-white">
+                    <SignalerBouton cibleType="annonce" cibleId={`${ev.id}_${photoOuverte.id}`} cibleNom={`Photo de ${photoOuverte.auteurNom} (événement « ${ev.titre} »)`} cibleUid={photoOuverte.auteurUid} libelle="Signaler" className="!text-white/80" />
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
