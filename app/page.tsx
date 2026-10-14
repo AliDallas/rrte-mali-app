@@ -10,7 +10,7 @@ export default function Home() {
         <div className="mb-4 flex flex-col items-center gap-3 text-center">
           <Logo size={176} />
           <p className="text-[11px] uppercase tracking-[0.2em] text-ink-mute">
-            Communauté de la diaspora au Mali
+            Communauté de la diaspora, des expatriés et des Maliens de l’extérieur au Mali
           </p>
         </div>
         <Link href="/login" className="btn-gold">

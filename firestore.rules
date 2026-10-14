@@ -111,9 +111,15 @@ service cloud.firestore {
     // Voyageurs & bagages : annonces des membres (kilos / valises), lecture réservée aux membres actifs
     match /voyages/{vid} {
       allow read: if isActiveMember();
-      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid;
+      // kilos / valises et demandes d'accompagnement : publiés tout de suite ;
+      // offres pour accompagner : "en_attente" jusqu'à validation par un administrateur
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() ||
+          request.resource.data.get('statut', 'valide') == 'en_attente' ||
+          request.resource.data.get('typeAnnonce', 'kilos') != 'accompagnateur');
       allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
-        request.resource.data.ownerUid == resource.data.ownerUid);
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.get('statut', 'valide') == resource.data.get('statut', 'valide'));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
     }
 

@@ -9,6 +9,7 @@ import Badges from "@/components/Badges";
 import { ficheIncomplete, ficheDepuisDoc } from "@/lib/fiches";
 import { ScrollText, LogOut, ShieldCheck, ChevronRight, Mail, Pencil } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import NousContacter from "@/components/NousContacter";
 import Avatar from "@/components/Avatar";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -88,6 +89,10 @@ export default function ProfilPage() {
         <span className="flex-1 font-semibold">Le groupe et son règlement</span>
         <ChevronRight size={18} className="text-muted" />
       </Link>
+
+      <div className="mb-4">
+        <NousContacter />
+      </div>
 
       <button onClick={handleLogout} className="card flex w-full items-center gap-3 p-4 text-left">
         <LogOut size={20} className="text-muted" strokeWidth={1.75} />

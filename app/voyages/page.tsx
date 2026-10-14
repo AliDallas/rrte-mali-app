@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { collection, getDocs } from "firebase/firestore";
-import { Luggage, Plane, Plus, Search } from "lucide-react";
+import { HeartHandshake, Luggage, Plane, Plus, Search, Users } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { Voyage, dateFr, expire, resumeTarif, voyageDepuisDoc } from "@/lib/voyages";
+import { Voyage, dateFr, expire, libelleType, resumeTarif, voyageDepuisDoc } from "@/lib/voyages";
 import { ecrireCache, lireCache } from "@/lib/cache";
 
 export default function VoyagesPage() {
@@ -17,6 +17,7 @@ export default function VoyagesPage() {
   const [q, setQ] = useState("");
   const [sens, setSens] = useState("");
   const [mesAnnonces, setMesAnnonces] = useState(false);
+  const [filtreType, setFiltreType] = useState<"" | "kilos" | "accompagnement">("");
 
   useEffect(() => {
     if (profile?.statut !== "actif") return;
@@ -39,14 +40,16 @@ export default function VoyagesPage() {
   const shown = useMemo(() => {
     const n = q.trim().toLowerCase();
     return liste
+      .filter((v) => v.statut !== "en_attente" || profile?.role === "admin" || v.ownerUid === user?.uid)
       .filter((v) => (mesAnnonces ? v.ownerUid === user?.uid : !expire(v)))
+      .filter((v) => !filtreType || (filtreType === "kilos" ? v.typeAnnonce === "kilos" : v.typeAnnonce !== "kilos"))
       .filter((v) => !sens || (sens === "mali" ? /bamako|mali/i.test(v.arrivee) : /bamako|mali/i.test(v.depart)))
       .filter((v) => !n || `${v.depart} ${v.arrivee} ${v.compagnie} ${v.ownerNom} ${v.message}`.toLowerCase().includes(n))
       .sort((a, b) => a.dateVol.localeCompare(b.dateVol));
-  }, [liste, q, sens, mesAnnonces, user]);
+  }, [liste, q, sens, mesAnnonces, filtreType, user, profile]);
 
   return (
-    <AppShell title="Voyageurs & bagages" subtitle="Des kilos ou des valises disponibles entre les membres">
+    <AppShell title="Voyageurs & bagages" subtitle="Kilos, valises et accompagnement entre membres">
       <div className="mb-3 flex gap-2">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-3.5 text-muted" />
@@ -63,8 +66,23 @@ export default function VoyagesPage() {
           <option value="depuis">Depuis le Mali</option>
         </select>
       </div>
+      <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+        {([
+          ["", "Tout"],
+          ["kilos", "Kilos & valises"],
+          ["accompagnement", "Accompagnement"],
+        ] as ["" | "kilos" | "accompagnement", string][]).map(([k, l]) => (
+          <button
+            key={k || "tout"}
+            onClick={() => setFiltreType(k)}
+            className={`flex-none rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${filtreType === k ? "border-gold-500 bg-gold-500 text-ink" : "border-line bg-white text-muted"}`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
       <Link href="/voyages/nouveau" className="mb-3 flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-ink-fg">
-        <Plus size={16} /> Proposer mes kilos / ma valise
+        <Plus size={16} /> Publier une annonce
       </Link>
       <label className="mb-4 flex items-center gap-2 text-sm text-muted">
         <input type="checkbox" checked={mesAnnonces} onChange={(e) => setMesAnnonces(e.target.checked)} />
@@ -97,12 +115,23 @@ export default function VoyagesPage() {
               {expire(v) && <span className="flex-none rounded-full bg-line px-2 py-0.5 text-xs text-muted">Passée</span>}
             </div>
             <p className="mt-1 text-sm text-muted">
-              Vol le {dateFr(v.dateVol)}
+              {v.typeAnnonce === "besoin" ? "Voyage" : "Vol"} le {dateFr(v.dateVol)}{v.dateSouple ? " (dates flexibles)" : ""}
               {v.compagnie && ` · ${v.compagnie}`}
               {v.kilosDispo > 0 && ` · ${v.kilosDispo} kg dispo`}
             </p>
-            <p className="mt-1 text-sm font-semibold">{resumeTarif(v)}</p>
-            {v.dateLimite && <p className="mt-1 text-xs text-brand-red">Dépôt des colis avant le {dateFr(v.dateLimite)}</p>}
+            {v.typeAnnonce === "kilos" ? (
+              <>
+                <p className="mt-1 text-sm font-semibold">{resumeTarif(v)}</p>
+                {v.dateLimite && <p className="mt-1 text-xs text-brand-red">Dépôt des colis avant le {dateFr(v.dateLimite)}</p>}
+              </>
+            ) : (
+              <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-[#5B3190]">
+                {v.typeAnnonce === "besoin" ? <Users size={15} /> : <HeartHandshake size={15} />}
+                {libelleType(v.typeAnnonce)} : {v.personne}
+                {v.agePersonne && ` (${v.agePersonne})`}
+              </p>
+            )}
+            {v.statut === "en_attente" && <p className="mt-1 text-xs font-semibold text-brand-red">En attente de validation</p>}
             <p className="mt-2 text-xs font-semibold text-gold-700">{v.ownerNom}</p>
           </Link>
         ))}

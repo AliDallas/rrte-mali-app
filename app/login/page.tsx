@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import BrandStrip from "@/components/BrandStrip";
+import { LIEN_CONTACT } from "@/lib/contact";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -80,6 +81,9 @@ export default function LoginPage() {
         <Link href="/signup" className="btn-outline">
           Demander l’accès
         </Link>
+        <a href={LIEN_CONTACT} className="mt-1 text-center text-sm text-ink-mute underline">
+          Une question ? Nous contacter
+        </a>
       </form>
       <BrandStrip />
     </main>

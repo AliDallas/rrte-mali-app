@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import BrandStrip from "@/components/BrandStrip";
 import { reduireImage } from "@/lib/image";
 import EntrepriseForm from "@/components/EntrepriseForm";
+import { REGLES } from "@/lib/reglement";
 import { EntrepriseSaisie, saisieVide } from "@/lib/entreprises";
 
 export default function SignupPage() {
@@ -28,6 +29,12 @@ export default function SignupPage() {
   const [objectif, setObjectif] = useState("");
   const [entreprises, setEntreprises] = useState<EntrepriseSaisie[]>([]);
   const [accepte, setAccepte] = useState(false);
+  const [luJusquauBout, setLu] = useState(false);
+  const boiteRef = useRef<HTMLDivElement>(null);
+  const surDefilement = () => {
+    const el = boiteRef.current;
+    if (el && el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setLu(true);
+  };
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -115,7 +122,7 @@ export default function SignupPage() {
           </Link>
           <h1 className="font-display text-2xl font-bold">Rejoindre RRTE</h1>
           <p className="text-sm text-ink-mute">
-            Réservé aux personnes de la diaspora installées au Mali ou y exerçant une activité. Votre
+            Réservé aux personnes de la diaspora, expatriés et Maliens de l’extérieur, installées au Mali ou y exerçant une activité. Votre
             inscription est validée par un administrateur.
           </p>
         </div>
@@ -127,13 +134,37 @@ export default function SignupPage() {
         <div className="space-y-3 rounded-2xl border border-[#454A50] p-4">
           <p className="text-sm font-semibold">Étape 1 : le règlement du groupe</p>
           <p className="text-xs text-ink-mute">
-            Lisez le règlement, puis acceptez-le pour accéder au formulaire d’inscription.
+            Lisez le règlement jusqu’en bas, puis acceptez-le pour accéder au formulaire d’inscription.
           </p>
-          <a href="/reglement" target="_blank" rel="noopener noreferrer" className="btn-outline block text-center">
-            Lire le règlement
-          </a>
-          <label className="flex items-start gap-2 text-sm text-ink-mute">
-            <input type="checkbox" checked={accepte} onChange={(e) => setAccepte(e.target.checked)} className="mt-1" />
+          <div
+            ref={boiteRef}
+            onScroll={surDefilement}
+            className="max-h-64 space-y-3 overflow-y-auto rounded-xl bg-black/20 p-3 text-sm"
+          >
+            <ol className="space-y-3">
+              {REGLES.map(([t, d], i) => (
+                <li key={t}>
+                  <b>{i + 1}. {t}.</b> {d}
+                </li>
+              ))}
+            </ol>
+            <p>
+              <b>Sanctions.</b> Les administrateurs font respecter ces règles. Après avertissement, tout membre qui ne
+              les respecte pas pourra être retiré du groupe.
+            </p>
+            <p className="font-semibold text-gold-500">Vous êtes arrivé au bout du règlement.</p>
+          </div>
+          {!luJusquauBout && (
+            <p className="text-xs text-gold-500">Faites défiler jusqu’en bas pour pouvoir accepter.</p>
+          )}
+          <label className={`flex items-start gap-2 text-sm text-ink-mute ${luJusquauBout ? "" : "opacity-50"}`}>
+            <input
+              type="checkbox"
+              checked={accepte}
+              disabled={!luJusquauBout}
+              onChange={(e) => setAccepte(e.target.checked)}
+              className="mt-1"
+            />
             <span>J’ai lu et j’accepte le règlement du groupe.</span>
           </label>
         </div>
