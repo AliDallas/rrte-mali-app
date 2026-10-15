@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addDoc, collection, serverTimestamp, updateDoc } from "firebase/firestore";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, Plus, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import {
-  BIENS, DEVISES_IMMO, EQUIPEMENTS, MAX_PHOTOS_IMMO, MEUBLES, PAPIERS, PERIODES, QUARTIERS_BAMAKO, TYPES_IMMO, TypeAnnonceImmo, VILLES_IMMO,
+  BIENS, DEVISES_IMMO, EQUIPEMENTS, MAX_LIENS_IMMO, MAX_PHOTOS_IMMO, MEUBLES, PAPIERS, PERIODES, QUARTIERS_BAMAKO, TYPES_IMMO, TypeAnnonceImmo, VILLES_IMMO,
   enregistrerPhotosImmo,
 } from "@/lib/immobilier";
+import { nettoyerLien } from "@/lib/liens";
 import { reduireImage } from "@/lib/image";
 import { viderCache } from "@/lib/cache";
 
@@ -58,6 +59,7 @@ export default function NouvelleImmoPage() {
   const [description, setDescription] = useState("");
   const [tel, setTel] = useState(profile?.telephone ?? "");
   const [photos, setPhotos] = useState<string[]>([]);
+  const [liens, setLiens] = useState<string[]>([""]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -82,6 +84,10 @@ export default function NouvelleImmoPage() {
     e.preventDefault();
     if (!user || !profile || !type) return;
     if (photos.join("").length > 900000) return setError("Les photos sont trop lourdes ensemble : retirez-en une ou deux.");
+    const propres = liens.map(nettoyerLien).filter(Boolean);
+    if (liens.some((l) => l.trim()) && propres.length !== liens.filter((l) => l.trim()).length) {
+      return setError("Un des liens n’est pas valide.");
+    }
     setSaving(true);
     setError("");
     try {
@@ -103,6 +109,7 @@ export default function NouvelleImmoPage() {
         papiers: estVente ? papiers : [],
         disponibleLe: disponibleLe.trim(),
         description: description.trim(),
+        liens: propres,
         tel: tel.trim(),
         vignette: "",
         termine: false,
@@ -293,6 +300,31 @@ export default function NouvelleImmoPage() {
             </div>
           </div>
         )}
+
+        <div className="card space-y-3 p-5">
+          <p className="text-sm font-medium">Liens : vidéo YouTube ou TikTok, Google Maps, Facebook…</p>
+          {liens.map((l, i) => (
+            <div key={i} className="flex gap-2">
+              <input
+                value={l}
+                onChange={(e) => setLiens(liens.map((x, j) => (j === i ? e.target.value : x)))}
+                placeholder="Collez le lien ici"
+                inputMode="url"
+                className="w-full rounded-2xl border border-line bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold-500"
+              />
+              {liens.length > 1 && (
+                <button type="button" aria-label="Retirer le lien" onClick={() => setLiens(liens.filter((_, j) => j !== i))} className="px-1 text-muted">
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          ))}
+          {liens.length < MAX_LIENS_IMMO && (
+            <button type="button" onClick={() => setLiens([...liens, ""])} className="flex items-center gap-1 text-sm font-semibold text-gold-700">
+              <Plus size={15} /> Ajouter un lien
+            </button>
+          )}
+        </div>
 
         <div className="card space-y-3 p-5">
           <label className="block text-sm font-medium">

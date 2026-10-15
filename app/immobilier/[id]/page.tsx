@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
-import { ChevronLeft, MapPin, MessageCircle, Phone, ShieldAlert, Trash2 } from "lucide-react";
+import { ChevronLeft, ExternalLink, MapPin, MessageCircle, Phone, ShieldAlert, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import SignalerBouton from "@/components/SignalerBouton";
 import { Immo, immoDepuisDoc, libelleTermine, libelleTypeImmo, lirePhotosImmo, resumePrix } from "@/lib/immobilier";
 import { chiffres } from "@/lib/fiches";
+import { idYoutube, plateforme } from "@/lib/liens";
 import { viderCache } from "@/lib/cache";
 
 export default function ImmoDetailPage() {
@@ -146,6 +147,30 @@ export default function ImmoDetailPage() {
             {i.description && <p className="whitespace-pre-line text-[15px]">{i.description}</p>}
             <p className="text-xs font-semibold text-gold-700">Publié par {i.ownerNom}</p>
           </div>
+
+          {i.liens.map(idYoutube).filter(Boolean).map((v) => (
+            <div key={v} className="overflow-hidden rounded-2xl">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${v}`}
+                title="Vidéo YouTube"
+                className="aspect-video w-full"
+                allow="encrypted-media; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+          ))}
+
+          {i.liens.length > 0 && (
+            <div className="card divide-y divide-line">
+              {i.liens.map((u) => (
+                <a key={u} href={u} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-3 px-4 py-3">
+                  <ExternalLink size={17} className="text-gold-600" />
+                  <span className="flex-1 text-[15px] font-semibold">Ouvrir sur {plateforme(u)}</span>
+                </a>
+              ))}
+            </div>
+          )}
 
           {i.tel && (
             <div className="card flex items-center gap-3 px-4 py-3">

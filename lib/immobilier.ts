@@ -38,6 +38,7 @@ export const PAPIERS = [
 ];
 
 export const MAX_PHOTOS_IMMO = 6;
+export const MAX_LIENS_IMMO = 4;
 
 export interface Immo {
   id: string;
@@ -60,6 +61,7 @@ export interface Immo {
   papiers: string[];
   disponibleLe: string;
   description: string;
+  liens: string[];
   vignette: string;
   statut: "valide" | "en_attente";
   termine: boolean; // loué / vendu / trouvé
@@ -91,6 +93,7 @@ export function immoDepuisDoc(id: string, x: Record<string, unknown>): Immo {
     papiers: a(x.papiers),
     disponibleLe: s(x.disponibleLe),
     description: s(x.description),
+    liens: a(x.liens),
     vignette: s(x.vignette),
     statut: x.statut === "en_attente" ? "en_attente" : "valide",
     termine: x.termine === true,
