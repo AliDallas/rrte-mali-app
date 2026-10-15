@@ -182,6 +182,16 @@ export default function AdminPage() {
     }
   }
 
+  // ouvre l'application à toutes les personnes validées pour WhatsApp (celles dont la fiche est en conflit sont laissées de côté)
+  async function ouvrirTous() {
+    if (!window.confirm(`Ouvrir l’application à ${inscrits.length} personne(s) ?`)) return;
+    for (const m of [...inscrits]) {
+      const f = ficheRetenue(m);
+      if (f?.uid && f.uid !== m.uid) continue;
+      await decide(m.uid, "actif");
+    }
+  }
+
   async function decideReco(id: string, valider: boolean) {
     setBusy(id);
     try {
@@ -240,6 +250,15 @@ export default function AdminPage() {
           <div className="flex-1">
             <p className="font-semibold">Importer entreprises et recommandés</p>
             <p className="text-xs text-muted">Charger le fichier trié (CSV)</p>
+          </div>
+        </Link>
+      )}
+      {isAdmin && (
+        <Link href="/admin/import-demarches" className="card mb-4 flex items-center gap-3 p-4">
+          <FileSpreadsheet className="text-gold-600" size={22} strokeWidth={1.75} />
+          <div className="flex-1">
+            <p className="font-semibold">Importer les fiches de démarches</p>
+            <p className="text-xs text-muted">État civil Mali et France (à relire)</p>
           </div>
         </Link>
       )}
@@ -403,6 +422,13 @@ export default function AdminPage() {
           <p className="mb-3 text-xs text-muted">
             Validés pour le groupe WhatsApp pendant la phase de test. Appuyez sur la coche pour leur ouvrir l’application.
           </p>
+          <button
+            disabled={busy !== null}
+            onClick={ouvrirTous}
+            className="btn-gold mb-3"
+          >
+            Ouvrir l’accès à tous les inscrits ({inscrits.length})
+          </button>
           <div className="space-y-3">
             {inscrits.map((m) => (
               <div key={m.uid} className="card flex items-center gap-3 p-4">
