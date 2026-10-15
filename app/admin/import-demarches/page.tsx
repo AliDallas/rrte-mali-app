@@ -8,7 +8,10 @@ import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { viderCache } from "@/lib/cache";
-import { DEMARCHES_INITIALES } from "@/lib/demarchesInitiales";
+import { DEMARCHES_INITIALES_2 as LOT2 } from "@/lib/demarchesInitiales2";
+
+// Le premier lot (10 fiches d’état civil) est déjà importé et validé : on n’y touche pas.
+const DEMARCHES_INITIALES = LOT2;
 
 export default function ImportDemarchesPage() {
   const { profile } = useAuth();
@@ -47,8 +50,8 @@ export default function ImportDemarchesPage() {
       ) : (
         <div className="space-y-4">
           <div className="card space-y-2 p-5">
-            <p className="font-semibold">{DEMARCHES_INITIALES.length} fiches « état civil » prêtes</p>
-            <ul className="list-disc pl-5 text-sm text-muted">
+            <p className="font-semibold">{DEMARCHES_INITIALES.length} fiches de démarches prêtes</p>
+            <ul className="max-h-72 list-disc overflow-y-auto pl-5 text-sm text-muted">
               {DEMARCHES_INITIALES.map((d) => (
                 <li key={d.id}>{d.titre}</li>
               ))}
