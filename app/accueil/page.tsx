@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
-import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping, Luggage, PartyPopper, ThumbsUp, Plus, Sparkles, FileText, HeartHandshake } from "lucide-react";
+import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping, Luggage, PartyPopper, ThumbsUp, Plus, Sparkles, FileText, HeartHandshake, Building2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
@@ -43,6 +43,7 @@ export default function AccueilPage() {
     { href: "/demarches", label: "Démarches & papiers", hint: "État civil, mariage, passeport, visas", Icon: FileText, fond: "from-[#8A5CC0] to-[#5B3190]", grand: true },
     { href: "/voyages", label: "Voyageurs & bagages", hint: "Kilos et valises", Icon: Luggage, fond: "from-[#2A92D0] to-[#0F5A8C]", grand: true },
     { href: "/solidarite", label: "Entraide & solidarité", hint: "Associations, collectifs, initiatives", Icon: HeartHandshake, fond: "from-[#E0577F] to-[#A82652]", grand: true },
+    { href: "/immobilier", label: "Immobilier", hint: "Location, vente, terrains", Icon: Building2, fond: "from-[#3FA38F] to-[#17695B]", grand: true },
     { href: "/demandes", label: "Demandes", hint: "Je cherche · Je propose", Icon: HandHelping, fond: "from-[#F6C24A] to-[#D99A10]" },
     { href: "/annuaire", label: "Membres", hint: actifs !== null ? `${actifs} inscrits` : "Annuaire", Icon: Users, fond: "from-[#2FB5A8] to-[#1B7F76]" },
     { href: "/entreprises", label: "Entreprises", hint: "Activités des membres", Icon: Briefcase, fond: "from-[#7DB85F] to-[#4A8030]" },

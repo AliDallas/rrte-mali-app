@@ -138,6 +138,23 @@ service cloud.firestore {
       }
     }
 
+    // Immobilier : annonces des membres (location, court séjour, vente, recherche), validées par un administrateur
+    match /immobilier/{iid} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+      allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente'));
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+
+      match /medias/{mediaId} {
+        allow read: if isActiveMember();
+        allow write: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/immobilier/$(iid)).data.ownerUid == request.auth.uid);
+      }
+    }
+
     // Démarches & papiers : guides partagés (état civil, passeport, visas…), relus par un administrateur
     match /demarches/{did} {
       allow read: if isActiveMember();
