@@ -92,8 +92,9 @@ export default function AppShell({
         getDocs(query(collection(db, "events"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
         getDocs(query(collection(db, "voyages"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
         getDocs(query(collection(db, "immobilier"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
+        getDocs(query(collection(db, "restos"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
       ])
-        .then(([a, b, c, d, e, f, g]) => !stop && setEnAttente(a.size + b.size + c.size + d.size + e.size + f.size + g.size))
+        .then(([a, b, c, d, e, f, g, h]) => !stop && setEnAttente(a.size + b.size + c.size + d.size + e.size + f.size + g.size + h.size))
         .catch(() => undefined);
     charger();
     const t = setInterval(charger, 60000);

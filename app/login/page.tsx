@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import BrandStrip from "@/components/BrandStrip";
+import { Eye, EyeOff } from "lucide-react";
 import { LIEN_CONTACT } from "@/lib/contact";
 
 export default function LoginPage() {
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [voir, setVoir] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +23,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       router.push("/accueil");
     } catch {
       setError("Email ou mot de passe incorrect.");
@@ -53,6 +55,9 @@ export default function LoginPage() {
             type="email"
             required
             autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="field-dark mt-1.5"
@@ -61,14 +66,27 @@ export default function LoginPage() {
         </label>
         <label className="block text-sm text-ink-mute">
           Mot de passe
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="field-dark mt-1.5"
-          />
+          <div className="relative">
+            <input
+              type={voir ? "text" : "password"}
+              required
+              autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="field-dark mt-1.5 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setVoir(!voir)}
+              aria-label={voir ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-mute"
+            >
+              {voir ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
         </label>
 
         <Link href="/mot-de-passe-oublie" className="-mt-1 text-right text-sm text-gold-500">
