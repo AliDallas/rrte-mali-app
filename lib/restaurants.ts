@@ -10,12 +10,14 @@ export const SERVICES = ["Sur place", "À emporter", "Livraison"];
 export const CATEGORIES_MENU = ["Entrées", "Plats", "Grillades", "Accompagnements", "Desserts", "Boissons", "Autre"];
 export const MAX_PHOTOS_RESTO = 6;
 export const MAX_PLATS = 80;
+export const MAX_PHOTOS_PLATS = 30;
 
 export interface Plat {
   cat: string;
   nom: string;
   prix: number;
   desc: string;
+  photo: string;
 }
 
 export interface Resto {
@@ -52,7 +54,7 @@ export function restoDepuisDoc(id: string, x: Record<string, unknown>): Resto {
   const n = (v: unknown) => (typeof v === "number" ? v : 0);
   const a = (v: unknown) => (Array.isArray(v) ? (v as unknown[]).filter((e): e is string => typeof e === "string") : []);
   const menu: Plat[] = Array.isArray(x.menu)
-    ? (x.menu as Record<string, unknown>[]).map((p) => ({ cat: s(p?.cat), nom: s(p?.nom), prix: n(p?.prix), desc: s(p?.desc) })).filter((p) => p.nom)
+    ? (x.menu as Record<string, unknown>[]).map((p) => ({ cat: s(p?.cat), nom: s(p?.nom), prix: n(p?.prix), desc: s(p?.desc), photo: s(p?.photo) })).filter((p) => p.nom)
     : [];
   return {
     id,

@@ -6,7 +6,7 @@ import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/fi
 import { ImagePlus, Plus, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { CATEGORIES_MENU, CUISINES, MAX_PHOTOS_RESTO, MAX_PLATS, Resto, SERVICES, enregistrerPhotosResto } from "@/lib/restaurants";
+import { CATEGORIES_MENU, CUISINES, MAX_PHOTOS_PLATS, MAX_PHOTOS_RESTO, MAX_PLATS, Resto, SERVICES, enregistrerPhotosResto } from "@/lib/restaurants";
 import { nettoyerLien } from "@/lib/liens";
 import { reduireImage } from "@/lib/image";
 import { viderCache } from "@/lib/cache";
@@ -19,6 +19,7 @@ interface PlatSaisie {
   nom: string;
   prix: string;
   desc: string;
+  photo: string;
 }
 
 /** Formulaire de création ou de modification d'une fiche restaurant (le propriétaire gère lui-même son menu). */
@@ -35,7 +36,7 @@ export default function RestoForm({ resto, photosInitiales = [] }: { resto?: Res
   const [services, setServices] = useState<string[]>(resto?.services ?? []);
   const [platDuJour, setPlatDuJour] = useState(resto?.platDuJour ?? "");
   const [menu, setMenu] = useState<PlatSaisie[]>(
-    resto?.menu.map((p) => ({ cat: p.cat, nom: p.nom, prix: p.prix ? String(p.prix) : "", desc: p.desc })) ?? []
+    resto?.menu.map((p) => ({ cat: p.cat, nom: p.nom, prix: p.prix ? String(p.prix) : "", desc: p.desc, photo: p.photo })) ?? []
   );
   const [liens, setLiens] = useState<string[]>(resto?.liens.length ? resto.liens : [""]);
   const [photos, setPhotos] = useState<string[]>(photosInitiales);
@@ -57,6 +58,21 @@ export default function RestoForm({ resto, photosInitiales = [] }: { resto?: Res
     setMenu(menu.map((p, j) => (j === i ? { ...p, [champ]: v } : p)));
   }
 
+  async function photoPlat(i: number, e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (!menu[i].photo && menu.filter((p) => p.photo).length >= MAX_PHOTOS_PLATS) {
+      return setError(`Vous pouvez mettre la photo de ${MAX_PHOTOS_PLATS} plats au maximum.`);
+    }
+    try {
+      const d = await reduireImage(f, 320, 0.6);
+      majPlat(i, "photo", d);
+    } catch {
+      setError("Cette photo n’a pas pu être lue.");
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!user || !profile) return;
@@ -64,6 +80,7 @@ export default function RestoForm({ resto, photosInitiales = [] }: { resto?: Res
     if (liens.some((l) => l.trim()) && propres.length !== liens.filter((l) => l.trim()).length) {
       return setError("Un des liens n’est pas valide.");
     }
+    if (menu.map((p) => p.photo).join("").length > 600000) return setError("Les photos des plats sont trop lourdes : retirez-en quelques-unes.");
     if (photos.join("").length > 900000) return setError("Les photos sont trop lourdes ensemble : retirez-en une ou deux.");
     setSaving(true);
     setError("");
@@ -81,7 +98,7 @@ export default function RestoForm({ resto, photosInitiales = [] }: { resto?: Res
       platDuJour: platDuJour.trim(),
       menu: menu
         .filter((p) => p.nom.trim())
-        .map((p) => ({ cat: p.cat || "Plats", nom: p.nom.trim(), prix: Number(p.prix) || 0, desc: p.desc.trim() })),
+        .map((p) => ({ cat: p.cat || "Plats", nom: p.nom.trim(), prix: Number(p.prix) || 0, desc: p.desc.trim(), photo: p.photo })),
     };
     try {
       let id = resto?.id;
@@ -176,7 +193,7 @@ export default function RestoForm({ resto, photosInitiales = [] }: { resto?: Res
         <p className="text-sm font-medium">Plat du jour (facultatif)</p>
         <input value={platDuJour} onChange={(e) => setPlatDuJour(e.target.value)} placeholder="Ex. Riz au gras, 2 500 FCFA" className={input} />
         <p className="pt-2 text-sm font-medium">Menu</p>
-        <p className="text-xs text-muted">Vous pourrez le modifier à tout moment, par exemple chaque jour.</p>
+        <p className="text-xs text-muted">Vous pourrez le modifier à tout moment, par exemple chaque jour. Une photo par plat est possible (30 plats au maximum avec photo).</p>
         {menu.map((p, i) => (
           <div key={i} className="space-y-2 rounded-2xl border border-line p-3">
             <div className="flex gap-2">
@@ -202,10 +219,31 @@ export default function RestoForm({ resto, photosInitiales = [] }: { resto?: Res
               />
             </div>
             <input value={p.desc} onChange={(e) => majPlat(i, "desc", e.target.value)} placeholder="Description (facultatif)" className="w-full rounded-xl border border-line bg-white px-3 py-2 text-sm" />
+            <div className="flex items-center gap-3">
+              {p.photo ? (
+                <div className="relative h-16 w-16">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.photo} alt="" className="h-16 w-16 rounded-xl object-cover" />
+                  <button
+                    type="button"
+                    aria-label="Retirer la photo du plat"
+                    onClick={() => majPlat(i, "photo", "")}
+                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-ink-fg"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-line px-3 py-2 text-xs text-muted">
+                  <ImagePlus size={16} /> Photo du plat
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => photoPlat(i, e)} />
+                </label>
+              )}
+            </div>
           </div>
         ))}
         {menu.length < MAX_PLATS && (
-          <button type="button" onClick={() => setMenu([...menu, { cat: "Plats", nom: "", prix: "", desc: "" }])} className="flex items-center gap-1 text-sm font-semibold text-gold-700">
+          <button type="button" onClick={() => setMenu([...menu, { cat: "Plats", nom: "", prix: "", desc: "", photo: "" }])} className="flex items-center gap-1 text-sm font-semibold text-gold-700">
             <Plus size={15} /> Ajouter un plat
           </button>
         )}

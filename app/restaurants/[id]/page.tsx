@@ -28,6 +28,7 @@ export default function RestoDetailPage() {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [zoom, setZoom] = useState("");
 
   const charger = useCallback(async () => {
     if (!id) return;
@@ -213,7 +214,13 @@ export default function RestoDetailPage() {
                   <p className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gold-700">{cat}</p>
                   {plats.map((p, k) => (
                     <div key={k} className="flex items-start justify-between gap-3 px-4 py-3">
-                      <div className="min-w-0">
+                      {p.photo && (
+                        <button type="button" onClick={() => setZoom(p.photo)} aria-label={`Agrandir la photo de ${p.nom}`} className="flex-none">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.photo} alt="" className="h-16 w-16 rounded-xl object-cover" />
+                        </button>
+                      )}
+                      <div className="min-w-0 flex-1">
                         <p className="font-semibold">{p.nom}</p>
                         {p.desc && <p className="text-sm text-muted">{p.desc}</p>}
                       </div>
@@ -319,6 +326,12 @@ export default function RestoDetailPage() {
                 <Trash2 size={15} /> Supprimer la fiche
               </button>
             ))}
+        </div>
+      )}
+      {zoom && (
+        <div onClick={() => setZoom("")} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={zoom} alt="" className="max-h-[80vh] max-w-full rounded-2xl object-contain" />
         </div>
       )}
     </AppShell>
