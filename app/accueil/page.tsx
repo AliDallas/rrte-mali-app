@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
 import Avatar from "@/components/Avatar";
 import NousContacter from "@/components/NousContacter";
+import { compterAttente } from "@/lib/enAttente";
 import { Fiche, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
 
 export default function AccueilPage() {
@@ -32,8 +33,8 @@ export default function AccueilPage() {
       .then((r) => setRecents(r.docs.map((d) => ficheDepuisDoc(d.id, d.data())).filter((f) => f.majLe > mois)))
       .catch(() => undefined);
     if (isAdmin) {
-      getCountFromServer(query(collection(db, "users"), where("statut", "==", "en_attente")))
-        .then((s) => setPending(s.data().count))
+      compterAttente()
+        .then((r) => setPending(r.total))
         .catch(() => setPending(null));
     }
   }, [profile, isAdmin]);
@@ -94,7 +95,7 @@ export default function AccueilPage() {
           <div className="flex-1">
             <p className="font-semibold">Administration</p>
             <p className="text-xs text-ink/70">
-              {pending === null ? "Valider les inscriptions" : pending === 0 ? "Aucune demande en attente" : `${pending} demande${pending > 1 ? "s" : ""} à valider`}
+              {pending === null ? "Valider les inscriptions" : pending === 0 ? "Rien à traiter" : `${pending} élément${pending > 1 ? "s" : ""} à traiter`}
             </p>
           </div>
           {pending ? (

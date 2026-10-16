@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { Check, FileSpreadsheet, Flag, ShieldCheck, UserCheck, X } from "lucide-react";
+import { BellRing, Check, FileSpreadsheet, Flag, ShieldCheck, UserCheck, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
@@ -250,6 +250,15 @@ export default function AdminPage() {
           <div className="flex-1">
             <p className="font-semibold">Importer entreprises et recommandés</p>
             <p className="text-xs text-muted">Charger le fichier trié (CSV)</p>
+          </div>
+        </Link>
+      )}
+      {isAdmin && (
+        <Link href="/admin/a-traiter" className="card mb-4 flex items-center gap-3 border-2 border-gold-500 p-4">
+          <BellRing className="text-gold-600" size={22} strokeWidth={1.75} />
+          <div className="flex-1">
+            <p className="font-semibold">À traiter</p>
+            <p className="text-xs text-muted">Tout ce qui attend une validation, par rubrique</p>
           </div>
         </Link>
       )}

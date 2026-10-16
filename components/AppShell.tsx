@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,6 +17,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
+import { compterAttente } from "@/lib/enAttente";
 import Logo from "./Logo";
 import BrandStrip from "./BrandStrip";
 
@@ -84,17 +85,8 @@ export default function AppShell({
     if (!estAdmin) return;
     let stop = false;
     const charger = () =>
-      Promise.all([
-        getDocs(query(collection(db, "users"), where("statut", "==", "en_attente"))),
-        getDocs(query(collection(db, "prestataires"), where("statut", "==", "en_attente"))),
-        getDocs(query(collection(db, "demarches"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
-        getDocs(query(collection(db, "signalements"), where("statut", "==", "nouveau"))).catch(() => ({ size: 0 })),
-        getDocs(query(collection(db, "events"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
-        getDocs(query(collection(db, "voyages"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
-        getDocs(query(collection(db, "immobilier"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
-        getDocs(query(collection(db, "restos"), where("statut", "==", "en_attente"))).catch(() => ({ size: 0 })),
-      ])
-        .then(([a, b, c, d, e, f, g, h]) => !stop && setEnAttente(a.size + b.size + c.size + d.size + e.size + f.size + g.size + h.size))
+      compterAttente()
+        .then((r) => !stop && setEnAttente(r.total))
         .catch(() => undefined);
     charger();
     const t = setInterval(charger, 60000);

@@ -182,6 +182,57 @@ service cloud.firestore {
       }
     }
 
+    // Entraide & solidarité : pages d'associations et de collectifs (un administrateur par page, validé par RRTE)
+    match /structures/{sid} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+      allow update: if isAdmin() ||
+        (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente'));
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+
+      match /publications/{pid} {
+        allow read: if isActiveMember();
+        allow create, update, delete: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/structures/$(sid)).data.ownerUid == request.auth.uid &&
+          get(/databases/$(database)/documents/structures/$(sid)).data.get('statut', 'en_attente') == 'valide');
+      }
+
+      match /medias/{mediaId} {
+        allow read: if isActiveMember();
+        allow write: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/structures/$(sid)).data.ownerUid == request.auth.uid);
+      }
+    }
+
+    // Initiatives des membres : proposées par tout membre actif, publiées après validation d'un administrateur
+    match /initiatives/{iid} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+      allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+        resource.data.get('statut', 'en_attente') == 'en_attente' && request.resource.data.get('statut', 'en_attente') == 'en_attente' &&
+        request.resource.data.ownerUid == resource.data.ownerUid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+    }
+
+    // Besoins & urgences (avec date limite) : proposés par tout membre actif, publiés après validation ; l'auteur peut les marquer « terminés »
+    match /besoins/{bid} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+      allow update: if isAdmin() ||
+        (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolu'])) ||
+        (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+          resource.data.get('statut', 'en_attente') == 'en_attente' &&
+          request.resource.data.get('statut', 'en_attente') == 'en_attente' &&
+          request.resource.data.ownerUid == resource.data.ownerUid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+    }
+
     // Démarches & papiers : guides partagés (état civil, passeport, visas…), relus par un administrateur
     match /demarches/{did} {
       allow read: if isActiveMember();

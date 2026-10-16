@@ -1,23 +1,34 @@
 "use client";
 
-import { HeartHandshake, Building2, Users, Lightbulb, Lock, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { HeartHandshake, Building2, Users, Lightbulb, AlertTriangle, ChevronRight, ShieldAlert } from "lucide-react";
 import AppShell from "@/components/AppShell";
 
 const RUBRIQUES = [
   {
+    titre: "Besoins & urgences",
+    href: "/solidarite/besoins",
+    texte: "Appels à l’aide avec date limite : urgence médicale, aide alimentaire, dons, bénévoles. Publiés après validation.",
+    Icon: AlertTriangle,
+    fond: "from-[#E8604C] to-[#B5321F]",
+  },
+  {
     titre: "Associations",
-    texte: "Un administrateur par association, validé par les administrateurs RRTE, publie ici les activités, photos et actions.",
+    href: "/solidarite/associations",
+    texte: "Un administrateur par association, validé par les administrateurs RRTE, publie ici les activités, événements, liens et appels aux dons.",
     Icon: Building2,
     fond: "from-[#2A92D0] to-[#0F5A8C]",
   },
   {
     titre: "Collectifs",
-    texte: "Un administrateur par collectif (aide aux orphelins, soutien aux familles…), validé par les administrateurs RRTE.",
+    href: "/solidarite/collectifs",
+    texte: "Un administrateur par collectif (aide aux orphelins, soutien aux familles…) publie ses actions, affiches et appels aux dons.",
     Icon: Users,
     fond: "from-[#2FB5A8] to-[#1B7F76]",
   },
   {
     titre: "Initiatives",
+    href: "/solidarite/initiatives",
     texte: "Tous les membres peuvent proposer une initiative. Elle est publiée après validation par un administrateur.",
     Icon: Lightbulb,
     fond: "from-[#F6C24A] to-[#D99A10]",
@@ -28,8 +39,8 @@ export default function SolidaritePage() {
   return (
     <AppShell title="Entraide & solidarité" subtitle="Associations, collectifs et initiatives">
       <div className="space-y-3">
-        {RUBRIQUES.map(({ titre, texte, Icon, fond }) => (
-          <div key={titre} className={`rounded-2xl bg-gradient-to-br ${fond} p-4 text-white shadow-sm`}>
+        {RUBRIQUES.map(({ titre, texte, Icon, fond, href }) => (
+          <Link key={titre} href={href} className={`block rounded-2xl bg-gradient-to-br ${fond} p-4 text-white shadow-sm`}>
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/20">
                 <Icon size={22} strokeWidth={1.75} />
@@ -39,10 +50,10 @@ export default function SolidaritePage() {
                 <p className="text-sm text-white/90">{texte}</p>
               </div>
             </div>
-            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
-              <Lock size={12} /> Bientôt disponible
+            <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-medium">
+              Ouvrir <ChevronRight size={12} />
             </p>
-          </div>
+          </Link>
         ))}
       </div>
 
