@@ -326,5 +326,114 @@ service cloud.firestore {
     match /admin_logs/{logId} {
       allow read, write: if isAdmin();
     }
+
+    // ---------------- Caisse solidaire ----------------
+    // Équipe de la caisse : un document par personne (rôle « tresorier » ou « controleur »), géré par les administrateurs.
+    function estEquipeCaisse() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/caisse_tresoriers/$(request.auth.uid));
+    }
+    function gereCaisse() {
+      return isAdmin() || (estEquipeCaisse() &&
+        get(/databases/$(database)/documents/caisse_tresoriers/$(request.auth.uid)).data.role == 'tresorier');
+    }
+    function voitCaisse() {
+      return isAdmin() || estEquipeCaisse();
+    }
+
+    match /caisse_tresoriers/{tid} {
+      allow read: if isActiveMember() || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Paiements envoyés par les membres (avec capture d'écran) : visibles du membre concerné et de l'équipe seulement
+    match /cotisations/{cid} {
+      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || voitCaisse());
+      allow create: if isActiveMember() && request.resource.data.uid == request.auth.uid &&
+        request.resource.data.statut == 'en_attente' &&
+        request.resource.data.nbMois is int && request.resource.data.nbMois >= 1 && request.resource.data.nbMois <= 12 &&
+        request.resource.data.montant == 2000 * request.resource.data.nbMois &&
+        request.resource.data.capture.size() < 800000;
+      allow update: if gereCaisse();
+      allow delete: if gereCaisse() ||
+        (isSignedIn() && resource.data.uid == request.auth.uid && resource.data.statut == 'en_attente');
+    }
+
+    // Liste des cotisants, totaux et dépenses : lisibles par tous les membres actifs ; écriture par la trésorerie
+    match /cotisants/{kid} {
+      allow read: if isActiveMember() || voitCaisse();
+      allow write: if gereCaisse();
+    }
+    match /caisse_totaux/{tid} {
+      allow read: if isActiveMember() || voitCaisse();
+      allow write: if voitCaisse();
+    }
+    // Dépenses : créées et annulées par la trésorerie ; une dépense importante ne devient valide que si une AUTRE personne de l'équipe l'approuve
+    match /depenses/{did} {
+      allow read: if isActiveMember() || voitCaisse();
+      allow create, delete: if gereCaisse();
+      allow update: if voitCaisse() && (
+        (resource.data.statut == 'a_approuver' && request.resource.data.statut == 'validee' &&
+          resource.data.saisiUid != request.auth.uid) ||
+        (gereCaisse() && request.resource.data.annulee == true) ||
+        (gereCaisse() && request.resource.data.statut == resource.data.statut));
+    }
+    // Rapprochements : le solde réel constaté sur le compte Orange Money, comparé au solde calculé. Jamais modifiés.
+    match /rapprochements/{rid} {
+      allow read: if voitCaisse();
+      allow create: if voitCaisse();
+      allow update, delete: if false;
+    }
+    // Journal de la caisse : on ajoute des lignes, jamais de modification ni de suppression
+    match /journal/{jid} {
+      allow read: if voitCaisse();
+      allow create: if voitCaisse();
+      allow update, delete: if false;
+    }
+    // Comité d'aide (au moins 5 personnes) : un document par membre du comité, géré par les administrateurs
+    function estComite() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/caisse_comite/$(request.auth.uid));
+    }
+    match /caisse_comite/{cid} {
+      allow read: if isActiveMember() || isAdmin();
+      allow write: if isAdmin();
+    }
+    // Paramètres de la caisse (plafond d'une aide…) : lecture par les membres actifs, écriture par les administrateurs
+    match /caisse_config/{pid} {
+      allow read: if isActiveMember() || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Demandes d'aide : visibles du membre demandeur, du comité et des administrateurs seulement
+    match /aides/{aid} {
+      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || estComite() || isAdmin());
+      allow create: if isActiveMember() && request.resource.data.uid == request.auth.uid &&
+        request.resource.data.statut == 'nouvelle';
+      allow update: if isAdmin() || estComite() || gereCaisse();
+      allow delete: if isAdmin() ||
+        (isSignedIn() && resource.data.uid == request.auth.uid && resource.data.statut == 'nouvelle');
+      match /votes/{vid} {
+        allow read: if isAdmin() || estComite();
+        allow write: if isAdmin() || (estComite() && request.auth.uid == vid);
+      }
+    }
+
+    // Vie du groupe : naissances, décès, mariages signalés par les membres, publiés après validation d'un administrateur
+    match /vie_evenements/{vid} {
+      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin() ||
+        (resource.data.statut == 'valide' && isActiveMember()));
+      allow create: if isActiveMember() && request.resource.data.uid == request.auth.uid &&
+        request.resource.data.statut == 'en_attente';
+      allow update: if isAdmin();
+      allow delete: if isAdmin() ||
+        (isSignedIn() && resource.data.uid == request.auth.uid && resource.data.statut == 'en_attente');
+    }
+
+    // Justificatifs des dépenses : équipe de la caisse seulement
+    match /depenses_justificatifs/{did} {
+      allow read: if voitCaisse();
+      allow write: if gereCaisse();
+    }
   }
 }

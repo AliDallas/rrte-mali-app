@@ -80,6 +80,19 @@ export default function ReglementPage() {
             membre qui ne les respecte pas pourra être retiré du groupe.
           </div>
         </section>
+
+        <section className="card space-y-3 p-5">
+          <h2 className="font-display text-lg font-bold">Départ et données personnelles</h2>
+          <p className="text-[15px]">
+            Chacun est libre de quitter le groupe à tout moment, sans avoir à se justifier longuement. Pour cela, utilisez le bouton
+            « Quitter le groupe RRTE » dans votre profil : il prépare un message écrit aux administrateurs, avec la raison du départ.
+          </p>
+          <p className="text-[15px]">
+            Sur demande, les administrateurs retirent la personne du groupe WhatsApp, ferment son accès à l’application et suppriment sa fiche
+            ainsi que, si elle le souhaite, ses publications, puis lui confirment par message. Vos informations ne sont jamais conservées
+            après une demande de suppression.
+          </p>
+        </section>
       </div>
     </AppShell>
   );

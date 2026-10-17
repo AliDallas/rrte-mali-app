@@ -7,7 +7,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Badges from "@/components/Badges";
 import { ficheIncomplete, ficheDepuisDoc } from "@/lib/fiches";
-import { ScrollText, LogOut, ShieldCheck, ChevronRight, Mail, Pencil } from "lucide-react";
+import { ScrollText, LogOut, ShieldCheck, ChevronRight, Mail, Pencil, UserMinus } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import NousContacter from "@/components/NousContacter";
 import Avatar from "@/components/Avatar";
@@ -98,6 +98,10 @@ export default function ProfilPage() {
         <LogOut size={20} className="text-muted" strokeWidth={1.75} />
         <span className="font-semibold">Se déconnecter</span>
       </button>
+
+      <Link href="/profil/quitter" className="mt-4 flex items-center justify-center gap-2 p-3 text-sm text-muted underline">
+        <UserMinus size={16} strokeWidth={1.75} /> Quitter le groupe RRTE
+      </Link>
     </AppShell>
   );
 }

@@ -23,6 +23,9 @@ export const RUBRIQUES_ATTENTE: RubriqueAttente[] = [
   { cle: "voyages", libelle: "Offres voyageurs", collection: "voyages", champ: "statut", valeur: "en_attente", href: "/voyages" },
   { cle: "immobilier", libelle: "Annonces immobilières", collection: "immobilier", champ: "statut", valeur: "en_attente", href: "/immobilier" },
   { cle: "restos", libelle: "Restaurants", collection: "restos", champ: "statut", valeur: "en_attente", href: "/restaurants" },
+  { cle: "cotisations", libelle: "Paiements de cotisation à valider", collection: "cotisations", champ: "statut", valeur: "en_attente", href: "/caisse/gestion" },
+  { cle: "aides", libelle: "Demandes d’aide à la caisse", collection: "aides", champ: "statut", valeur: "nouvelle", href: "/caisse/aide" },
+  { cle: "vie", libelle: "Événements de la vie du groupe", collection: "vie_evenements", champ: "statut", valeur: "en_attente", href: "/caisse/vie" },
   { cle: "prestataires", libelle: "Recommandés proposés", collection: "prestataires", champ: "statut", valeur: "en_attente", href: "/prestataires" },
 ];
 
