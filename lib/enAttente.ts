@@ -14,6 +14,7 @@ export interface RubriqueAttente {
 export const RUBRIQUES_ATTENTE: RubriqueAttente[] = [
   { cle: "users", libelle: "Inscriptions de membres", collection: "users", champ: "statut", valeur: "en_attente", href: "/admin" },
   { cle: "signalements", libelle: "Signalements", collection: "signalements", champ: "statut", valeur: "nouveau", href: "/admin/signalements" },
+  { cle: "entreprises", libelle: "Entreprises à valider", collection: "entreprises", champ: "statut", valeur: "en_attente", href: "/admin" },
   { cle: "besoins", libelle: "Besoins & urgences", collection: "besoins", champ: "statut", valeur: "en_attente", href: "/solidarite/besoins" },
   { cle: "structures", libelle: "Pages d’associations et de collectifs", collection: "structures", champ: "statut", valeur: "en_attente", href: "/solidarite" },
   { cle: "initiatives", libelle: "Initiatives des membres", collection: "initiatives", champ: "statut", valeur: "en_attente", href: "/solidarite/initiatives" },

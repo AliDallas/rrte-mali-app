@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { BellRing, Check, FileSpreadsheet, Flag, ShieldCheck, UserCheck, X } from "lucide-react";
+import { BellRing, Check, FileSpreadsheet, Flag, Inbox, LayoutDashboard, ShieldCheck, UserCheck, Users, Wrench, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth, MemberProfile } from "@/lib/AuthContext";
 import { Entreprise, enregistrerPhotos, entrepriseDepuisDoc, saisieVersDoc } from "@/lib/entreprises";
 import { viderCache } from "@/lib/cache";
+import AdminTableau, { OngletAdmin } from "@/components/AdminTableau";
+import { ResultatAttente, compterAttente } from "@/lib/enAttente";
 import CopierPresentation from "@/components/CopierPresentation";
 import MessagePersonne from "@/components/MessagePersonne";
 import { DonneesPresentation, donneesDepuisInscription, donneesDepuisFiche, texteAcceptation } from "@/lib/presentation";
@@ -31,6 +33,20 @@ export default function AdminPage() {
   const [valides, setValides] = useState<(DonneesPresentation & { enTest?: boolean })[]>([]);
   const [inscrits, setInscrits] = useState<MemberProfile[]>([]);
   const isAdmin = profile?.role === "admin";
+  const [onglet, setOnglet] = useState<OngletAdmin>("tableau");
+  const [attente, setAttente] = useState<{ total: number; details: ResultatAttente[] } | null>(null);
+  const [comptage, setComptage] = useState(false);
+
+  const actualiser = useCallback(() => {
+    setComptage(true);
+    compterAttente()
+      .then(setAttente)
+      .finally(() => setComptage(false));
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin) actualiser();
+  }, [isAdmin, onglet, actualiser]);
 
   const load = useCallback(async () => {
     const snap = await getDocs(query(collection(db, "users"), where("statut", "==", "en_attente")));
@@ -216,9 +232,42 @@ export default function AdminPage() {
   }
 
   return (
-    <AppShell title="Administration" subtitle="Valider les inscriptions">
+    <AppShell title="Administration" subtitle="Tableau de bord">
+      {!isAdmin && <p className="card p-6 text-center text-muted">Cette page est réservée aux administrateurs.</p>}
       {isAdmin && (
-        <Link href="/admin/administrateurs" className="card mb-4 flex items-center gap-3 p-4">
+        <nav className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1">
+          {([
+            ["tableau", "Tableau de bord", LayoutDashboard, 0],
+            ["inscriptions", "Inscriptions", Users, pending.length + inscrits.length],
+            ["contenus", "Contenus", Inbox, entAttente.length + recoAttente.length],
+            ["outils", "Outils", Wrench, 0],
+          ] as [OngletAdmin, string, typeof Users, number][]).map(([cle, libelle, Icone, n]) => (
+            <button
+              key={cle}
+              onClick={() => setOnglet(cle)}
+              className={`flex flex-none items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold ${onglet === cle ? "border-ink bg-ink text-ink-fg" : "border-line bg-white text-muted"}`}
+            >
+              <Icone size={15} /> {libelle}
+              {n > 0 && <span className="ml-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-red px-1.5 text-xs font-bold text-white">{n}</span>}
+            </button>
+          ))}
+        </nav>
+      )}
+      {isAdmin && onglet === "tableau" && (
+        <AdminTableau attente={attente} chargement={comptage} onActualiser={actualiser} onAller={setOnglet} nbInscrits={inscrits.length} />
+      )}
+      {isAdmin && onglet === "outils" && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted">Gestion des administrateurs et imports de fichiers.</p>
+          <Link href="/admin/a-traiter" className="card flex items-center gap-3 border-2 border-gold-500 p-4">
+            <BellRing className="text-gold-600" size={22} strokeWidth={1.75} />
+            <div className="flex-1">
+              <p className="font-semibold">À traiter (vue détaillée)</p>
+              <p className="text-xs text-muted">Tout ce qui attend une validation, par rubrique</p>
+            </div>
+          </Link>
+      {(
+        <Link href="/admin/administrateurs" className="card flex items-center gap-3 p-4">
           <ShieldCheck className="text-gold-600" size={22} strokeWidth={1.75} />
           <div className="flex-1">
             <p className="font-semibold">Administrateurs</p>
@@ -226,8 +275,8 @@ export default function AdminPage() {
           </div>
         </Link>
       )}
-      {isAdmin && (
-        <Link href="/admin/import" className="card mb-4 flex items-center gap-3 p-4">
+      {(
+        <Link href="/admin/import" className="card flex items-center gap-3 p-4">
           <FileSpreadsheet className="text-gold-600" size={22} strokeWidth={1.75} />
           <div className="flex-1">
             <p className="font-semibold">Importer l’annuaire</p>
@@ -235,8 +284,8 @@ export default function AdminPage() {
           </div>
         </Link>
       )}
-      {isAdmin && (
-        <Link href="/admin/signalements" className="card mb-4 flex items-center gap-3 p-4">
+      {(
+        <Link href="/admin/signalements" className="card flex items-center gap-3 p-4">
           <Flag className="text-brand-red" size={22} strokeWidth={1.75} />
           <div className="flex-1">
             <p className="font-semibold">Signalements</p>
@@ -244,8 +293,8 @@ export default function AdminPage() {
           </div>
         </Link>
       )}
-      {isAdmin && (
-        <Link href="/admin/import-contacts" className="card mb-4 flex items-center gap-3 p-4">
+      {(
+        <Link href="/admin/import-contacts" className="card flex items-center gap-3 p-4">
           <FileSpreadsheet className="text-gold-600" size={22} strokeWidth={1.75} />
           <div className="flex-1">
             <p className="font-semibold">Importer entreprises et recommandés</p>
@@ -253,17 +302,8 @@ export default function AdminPage() {
           </div>
         </Link>
       )}
-      {isAdmin && (
-        <Link href="/admin/a-traiter" className="card mb-4 flex items-center gap-3 border-2 border-gold-500 p-4">
-          <BellRing className="text-gold-600" size={22} strokeWidth={1.75} />
-          <div className="flex-1">
-            <p className="font-semibold">À traiter</p>
-            <p className="text-xs text-muted">Tout ce qui attend une validation, par rubrique</p>
-          </div>
-        </Link>
-      )}
-      {isAdmin && (
-        <Link href="/admin/import-demarches" className="card mb-4 flex items-center gap-3 p-4">
+      {(
+        <Link href="/admin/import-demarches" className="card flex items-center gap-3 p-4">
           <FileSpreadsheet className="text-gold-600" size={22} strokeWidth={1.75} />
           <div className="flex-1">
             <p className="font-semibold">Importer les fiches de démarches</p>
@@ -271,6 +311,10 @@ export default function AdminPage() {
           </div>
         </Link>
       )}
+        </div>
+      )}
+      {isAdmin && onglet === "inscriptions" && (
+        <>
       {isAdmin && valides.length > 0 && (
         <div className="mb-5 space-y-3">
           <h2 className="font-display text-lg font-bold">Membres validés : à prévenir et à annoncer</h2>
@@ -461,6 +505,10 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+        </>
+      )}
+      {isAdmin && onglet === "contenus" && (
+        <>
       {isAdmin && loaded && entAttente.length > 0 && (
         <div className="mt-6">
           <h2 className="mb-3 font-display text-lg font-bold">Entreprises à valider</h2>
@@ -532,6 +580,11 @@ export default function AdminPage() {
             ))}
           </div>
         </div>
+      )}
+          {loaded && entAttente.length === 0 && recoAttente.length === 0 && (
+            <p className="card p-6 text-center text-muted">Aucune entreprise ni recommandation en attente. Les autres rubriques se valident depuis le Tableau de bord.</p>
+          )}
+        </>
       )}
     </AppShell>
   );
