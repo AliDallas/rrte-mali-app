@@ -11,11 +11,12 @@ import { viderCache } from "@/lib/cache";
 import { DEMARCHES_INITIALES_2 as LOT2 } from "@/lib/demarchesInitiales2";
 import { DEMARCHES_INITIALES_3 as LOT3 } from "@/lib/demarchesInitiales3";
 import { DEMARCHES_INITIALES_4 as LOT4 } from "@/lib/demarchesInitiales4";
+import { DEMARCHES_INITIALES_5 as LOT5 } from "@/lib/demarchesInitiales5";
 
 // Le premier lot (10 fiches d’état civil) est déjà importé et validé : on n’y touche pas.
 // Les lots 2, 3 et 4 : seules les fiches absentes de la base sont ajoutées, celles qui existent déjà
 // (relues, corrigées ou validées) ne sont jamais écrasées.
-const TOUTES = [...LOT2, ...LOT3, ...LOT4];
+const TOUTES = [...LOT2, ...LOT3, ...LOT4, ...LOT5];
 
 export default function ImportDemarchesPage() {
   const { profile } = useAuth();
