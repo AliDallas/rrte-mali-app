@@ -9,6 +9,9 @@ export const CATEGORIES_DEMARCHES = [
   "Famille & enfants",
   "Impôts, douane & retraite",
   "Création d’entreprise & foncier",
+  "Foncier & logement",
+  "Justice & police",
+  "Études & social",
   "Autre",
 ];
 

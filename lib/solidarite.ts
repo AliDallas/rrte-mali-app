@@ -40,7 +40,7 @@ export const REGLES_ADMIN_STRUCTURE: string[] = [
   "Je n’affiche pas de données personnelles de tiers (photos d’enfants, adresses, numéros) sans leur accord, ou celui de leurs parents.",
   "Mes droits se limitent à ma page : je n’ai aucun droit sur le reste de l’application.",
   "Les administrateurs RRTE peuvent masquer, corriger ou retirer une page ou une publication, et me retirer l’administration en cas de manquement.",
-  "RRTE et son application ne sont pas responsables du contenu publié ni des dons échangés, notamment au regard du droit français : chaque publication relève de la seule responsabilité de son auteur.",
+  "RRTE et son application ne sont pas responsables du contenu publié ni des dons échangés, notamment au regard du droit malien : chaque publication relève de la seule responsabilité de son auteur.",
 ];
 
 export const AVERTISSEMENT_DONS =

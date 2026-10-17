@@ -423,7 +423,7 @@ export const DEMARCHES_INITIALES_2: DemarcheInitiale[] = [
     titre: "Carte nationale d’identité malienne : demande",
     categorie: CAT_ID,
     lieu: "Mali",
-    resume: "La demande se dépose à la section carte d’identité du commissariat de votre commune, à la brigade de gendarmerie ou chez le sous-préfet.",
+    resume: "Ancienne procédure du portail officiel : depuis 2023, la carte d’identité biométrique sécurisée (CNIBS) remplace la carte d’identité nationale, la carte NINA et la carte consulaire (voir la fiche CNIBS). La demande se dépose à la section carte d’identité du commissariat de votre commune, à la brigade de gendarmerie ou chez le sous-préfet.",
     etapes: [
       "Se présenter au commissariat, à la brigade de gendarmerie ou chez le sous-préfet.",
       "L’agent relève les empreintes, la taille et l’adresse complète (rue, numéro, nom du logeur si besoin).",

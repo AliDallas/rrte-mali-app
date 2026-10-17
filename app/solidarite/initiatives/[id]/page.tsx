@@ -103,7 +103,7 @@ export default function InitiativeDetailPage() {
             )}
           </div>
           <p className="text-xs text-muted">
-            RRTE et son application ne sont pas responsables du contenu des initiatives, notamment au regard du droit français.
+            RRTE et son application ne sont pas responsables du contenu des initiatives, notamment au regard du droit malien.
           </p>
           {!estAuteur && <SignalerBouton cibleType="fiche" cibleId={`init_${i.id}`} cibleNom={`Initiative « ${i.titre} »`} cibleUid={i.ownerUid} libelle="Signaler cette initiative" />}
           {(estAdmin || estAuteur) &&

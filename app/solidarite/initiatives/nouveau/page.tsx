@@ -124,7 +124,7 @@ export default function NouvelleInitiativePage() {
           <LiensEditeur liens={liens} onChange={setLiens} max={4} />
         </div>
         <p className="text-xs text-muted">
-          RRTE et son application ne sont pas responsables du contenu des initiatives, notamment au regard du droit français. Chaque publication relève de la seule responsabilité de son auteur.
+          RRTE et son application ne sont pas responsables du contenu des initiatives, notamment au regard du droit malien. Chaque publication relève de la seule responsabilité de son auteur.
         </p>
         <button type="submit" disabled={saving} className="btn-gold">
           {saving ? "Envoi..." : "Envoyer pour validation"}
