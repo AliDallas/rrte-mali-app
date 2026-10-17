@@ -22,7 +22,7 @@ function CotiserContenu() {
   const annee = anneeCaisse();
   const admin = profile?.role === "admin";
   const [couverts, setCouverts] = useState(0);
-  const [nbMois, setNbMois] = useState(1);
+  const [nbMois, setNbMois] = useState(3);
   const [reference, setReference] = useState("");
   const [capture, setCapture] = useState("");
   const [envoi, setEnvoi] = useState(false);

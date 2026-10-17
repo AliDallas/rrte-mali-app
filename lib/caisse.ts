@@ -10,8 +10,6 @@ export const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "jui
 
 /** Rythmes de paiement proposés : le membre choisit combien de mois il règle d'un coup. */
 export const RYTHMES = [
-  { mois: 1, label: "Chaque mois" },
-  { mois: 2, label: "Tous les 2 mois" },
   { mois: 3, label: "Chaque trimestre" },
   { mois: 6, label: "Chaque semestre" },
   { mois: 12, label: "Une fois par an" },

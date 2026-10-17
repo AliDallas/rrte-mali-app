@@ -379,6 +379,13 @@ service cloud.firestore {
         (gereCaisse() && request.resource.data.statut == resource.data.statut));
     }
     // Rapprochements : le solde réel constaté sur le compte Orange Money, comparé au solde calculé. Jamais modifiés.
+    // Dons et sponsoring : le nom affiché est « Anonyme » si le donateur le souhaite (le vrai nom reste dans le journal). Annulation possible, jamais de suppression.
+    match /dons/{donid} {
+      allow read: if isActiveMember() || voitCaisse();
+      allow create: if gereCaisse() && request.resource.data.montant is int && request.resource.data.montant > 0;
+      allow update: if gereCaisse() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['annulee', 'motifAnnulation', 'annuleLe']);
+      allow delete: if false;
+    }
     match /rapprochements/{rid} {
       allow read: if voitCaisse();
       allow create: if voitCaisse();

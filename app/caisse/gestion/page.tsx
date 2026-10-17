@@ -5,21 +5,22 @@ import Link from "next/link";
 import {
   addDoc, collection, deleteDoc, doc, getDoc, getDocs, increment, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch, limit,
 } from "firebase/firestore";
-import { CheckCircle2, ChevronLeft, FileSpreadsheet, ImagePlus, Trash2, X, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronLeft, FileSpreadsheet, ImagePlus, MessageCircle, Trash2, X, XCircle } from "lucide-react";
+import { lienWhatsAppVers } from "@/lib/contact";
 import AppShell from "@/components/AppShell";
 import CaisseAcces from "@/components/CaisseAcces";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { reduireImage } from "@/lib/image";
 import {
-  CAISSE_VISIBLE_MEMBRES, CATEGORIES_DEPENSE, Cotisant, Cotisation, Depense, LigneJournal, MOIS, ParametresCaisse, Rapprochement, SEUIL_DOUBLE_CONTROLE, SEUIL_JUSTIFICATIF, Totaux,
+  CAISSE_VISIBLE_MEMBRES, CATEGORIES_DEPENSE, Cotisant, Cotisation, Depense, LigneJournal, MOIS, MONTANT_MENSUEL, ParametresCaisse, Rapprochement, SEUIL_DOUBLE_CONTROLE, SEUIL_JUSTIFICATIF, Totaux,
   anneeCaisse, fcfa, statutCotisation,
 } from "@/lib/caisse";
 import { exporterExcel } from "@/lib/exportCaisse";
 import { ligneJournal, opsAnnulerDepense, opsApprouverDepense, opsNouvelleDepense } from "@/lib/caisseOps";
 
 const input = "mt-1.5 w-full rounded-2xl border border-line bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold-500";
-type Onglet = "paiements" | "depenses" | "journal" | "controle" | "suivi" | "equipe";
+type Onglet = "paiements" | "dons" | "depenses" | "journal" | "controle" | "suivi" | "equipe";
 interface MembreLeger {
   uid: string;
   prenom: string;
@@ -123,6 +124,7 @@ function GestionContenu() {
   const solde = totaux.encaisse - totaux.depense;
   const ONGLETS: { cle: Onglet; label: string; n?: number }[] = [
     { cle: "paiements", label: "Paiements", n: enAttente.length },
+    { cle: "dons", label: "Dons" },
     { cle: "depenses", label: "Dépenses", n: depenses.filter((d) => d.statut === "a_approuver" && !d.annulee).length },
     { cle: "journal", label: "Journal" },
     { cle: "controle", label: "Solde réel" },
@@ -177,6 +179,9 @@ function GestionContenu() {
 
       {onglet === "paiements" && (
         <PaiementsOnglet enAttente={enAttente} valides={valides} tousValides={tousValides} acteurNom={`${profile?.prenom ?? ""} ${profile?.nom ?? ""}`.trim()} gere={gere} occupe={occupe} setOccupe={setOccupe} setMessage={setMessage} recharger={charger} validePar={uid ?? ""} />
+      )}
+      {onglet === "dons" && (
+        <DonsOnglet gere={gere} occupe={occupe} setOccupe={setOccupe} setMessage={setMessage} recharger={charger} acteurNom={`${profile?.prenom ?? ""} ${profile?.nom ?? ""}`.trim()} acteurUid={uid ?? ""} />
       )}
       {onglet === "depenses" && (
         <DepensesOnglet depenses={depenses} uid={uid ?? ""} peutApprouver={voit} gere={gere} occupe={occupe} setOccupe={setOccupe} setMessage={setMessage} recharger={charger} nomSaisie={`${profile?.prenom ?? ""} ${profile?.nom ?? ""}`.trim()} />
@@ -691,6 +696,165 @@ function ControleOnglet({ rapprochements, soldeCalcule, acteurNom, acteurUid, se
   );
 }
 
+interface DonLigne {
+  id: string;
+  date: string;
+  donateurAffiche: string;
+  montant: number;
+  recu: string;
+  note?: string;
+  annulee?: boolean;
+}
+
+/** Dons et sponsoring : saisis par la trésorerie. Le nom réel n'est écrit que dans le journal (équipe) ; les membres voient « Anonyme » si le donateur le souhaite. */
+function DonsOnglet({ gere, occupe, setOccupe, setMessage, recharger, acteurNom, acteurUid }: Commun & { acteurNom: string; acteurUid: string }) {
+  const [dons, setDons] = useState<DonLigne[] | null>(null);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [donateur, setDonateur] = useState("");
+  const [anonyme, setAnonyme] = useState(false);
+  const [montant, setMontant] = useState("");
+  const [note, setNote] = useState("");
+  const [aAnnuler, setAAnnuler] = useState<string | null>(null);
+  const [motifAnnul, setMotifAnnul] = useState("");
+
+  const lire = useCallback(async () => {
+    try {
+      const r = await getDocs(query(collection(db, "dons"), orderBy("date", "desc"), limit(50)));
+      setDons(r.docs.map((d) => ({ ...(d.data() as Omit<DonLigne, "id">), id: d.id })));
+    } catch {
+      setDons([]);
+      setMessage("Impossible de lire les dons. Vérifiez que les règles de sécurité sont à jour.");
+    }
+  }, [setMessage]);
+  useEffect(() => {
+    lire();
+  }, [lire]);
+
+  async function enregistrer() {
+    const m = Math.round(Number(montant.replace(/\s/g, "")));
+    if (!donateur.trim()) return setMessage("Indiquez le nom du donateur ou du sponsor.");
+    if (!Number.isFinite(m) || m <= 0) return setMessage("Indiquez un montant valide.");
+    setOccupe(true);
+    setMessage("");
+    try {
+      const annee = Number(date.slice(0, 4)) || new Date().getFullYear();
+      await runTransaction(db, async (tx) => {
+        const gref = doc(db, "caisse_totaux", "global");
+        const gsnap = await tx.get(gref);
+        const numero = (gsnap.exists() ? Number(gsnap.data().compteurDons) || 0 : 0) + 1;
+        const recu = `DON-${annee}-${String(numero).padStart(4, "0")}`;
+        const dref = doc(collection(db, "dons"));
+        tx.set(dref, {
+          date,
+          donateurAffiche: anonyme ? "Anonyme" : donateur.trim(),
+          montant: m,
+          recu,
+          note: note.trim(),
+          annulee: false,
+          saisiPar: acteurNom,
+          saisiUid: acteurUid,
+          creeLe: serverTimestamp(),
+        });
+        tx.set(gref, { encaisse: increment(m), compteurDons: numero }, { merge: true });
+        const j = ligneJournal({ sens: "entree", montant: m, libelle: `Don de ${donateur.trim()}${anonyme ? " (anonyme pour les membres)" : ""}`, categorie: "Don", ref: recu, acteurUid, acteurNom });
+        tx.set(j.ref, j.data);
+      });
+      setDonateur("");
+      setMontant("");
+      setNote("");
+      setAnonyme(false);
+      await lire();
+      await recharger();
+    } catch {
+      setMessage("L’enregistrement du don a échoué. Réessayez.");
+    }
+    setOccupe(false);
+  }
+
+  async function annuler(d: DonLigne) {
+    if (!motifAnnul.trim()) return setMessage("Indiquez le motif de l’annulation.");
+    setOccupe(true);
+    setMessage("");
+    try {
+      await runTransaction(db, async (tx) => {
+        const dref = doc(db, "dons", d.id);
+        const s = await tx.get(dref);
+        if (!s.exists() || s.data().annulee) throw new Error("deja");
+        tx.update(dref, { annulee: true, motifAnnulation: motifAnnul.trim(), annuleLe: serverTimestamp() });
+        tx.set(doc(db, "caisse_totaux", "global"), { encaisse: increment(-d.montant) }, { merge: true });
+        const j = ligneJournal({ sens: "sortie", montant: d.montant, libelle: `Annulation du don ${d.recu} : ${motifAnnul.trim()}`, categorie: "Annulation", ref: d.recu, acteurUid, acteurNom });
+        tx.set(j.ref, j.data);
+      });
+      setAAnnuler(null);
+      setMotifAnnul("");
+      await lire();
+      await recharger();
+    } catch {
+      setMessage("L’annulation a échoué. Réessayez.");
+    }
+    setOccupe(false);
+  }
+
+  return (
+    <div className="space-y-4">
+      {gere ? (
+        <section className="card space-y-3 p-5">
+          <h2 className="font-display text-lg font-bold">Enregistrer un don ou un sponsoring</h2>
+          <p className="text-xs text-muted">À saisir après avoir vérifié la réception sur le numéro de la caisse. Un don augmente le solde mais ne compte pas comme cotisation.</p>
+          <label className="block text-sm font-semibold">Date
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={input} />
+          </label>
+          <label className="block text-sm font-semibold">Donateur ou sponsor
+            <input value={donateur} onChange={(e) => setDonateur(e.target.value)} className={input} placeholder="Nom de la personne ou de l’entreprise" />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={anonyme} onChange={(e) => setAnonyme(e.target.checked)} />
+            Le donateur souhaite rester anonyme pour les membres (l’équipe de la caisse voit le nom dans le journal)
+          </label>
+          <label className="block text-sm font-semibold">Montant (FCFA)
+            <input inputMode="numeric" value={montant} onChange={(e) => setMontant(e.target.value)} className={input} placeholder="Ex. 25000" />
+          </label>
+          <label className="block text-sm font-semibold">Note (facultatif)
+            <input value={note} onChange={(e) => setNote(e.target.value)} className={input} placeholder="Ex. pour le barbecue, sans affectation…" />
+          </label>
+          <button onClick={enregistrer} disabled={occupe} className="btn-gold w-full">Enregistrer le don</button>
+        </section>
+      ) : (
+        <div className="rounded-xl bg-gold-500/10 p-3 text-sm">Seuls le trésorier et les administrateurs peuvent enregistrer un don.</div>
+      )}
+      <section className="card space-y-2 p-5">
+        <h2 className="font-display text-base font-bold">Dons enregistrés</h2>
+        {dons === null ? (
+          <p className="text-sm text-muted">Chargement…</p>
+        ) : dons.length === 0 ? (
+          <p className="text-sm text-muted">Aucun don pour l’instant.</p>
+        ) : (
+          dons.map((d) => (
+            <div key={d.id} className={`space-y-2 rounded-xl border border-line p-3 text-sm ${d.annulee ? "opacity-60" : ""}`}>
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{d.donateurAffiche}{d.annulee ? " (annulé)" : ""}</p>
+                  <p className="text-xs text-muted">{new Date(d.date).toLocaleDateString("fr-FR")} · {d.recu}{d.note ? ` · ${d.note}` : ""}</p>
+                </div>
+                <p className="font-semibold tabular-nums">{fcfa(d.montant)}</p>
+                {gere && !d.annulee && (
+                  <button onClick={() => setAAnnuler(aAnnuler === d.id ? null : d.id)} aria-label="Annuler ce don" className="text-muted"><X size={18} /></button>
+                )}
+              </div>
+              {aAnnuler === d.id && (
+                <div className="space-y-2">
+                  <input value={motifAnnul} onChange={(e) => setMotifAnnul(e.target.value)} className={input} placeholder="Motif de l’annulation (erreur de saisie…)" />
+                  <button onClick={() => annuler(d)} disabled={occupe} className="btn-outline w-full">Confirmer l’annulation</button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </section>
+    </div>
+  );
+}
+
 function SuiviOnglet({ membres, cotisants, annee }: { membres: MembreLeger[]; cotisants: Cotisant[]; annee: number }) {
   const parUid = useMemo(() => new Map(cotisants.map((c) => [c.uid, c])), [cotisants]);
   const nonCotisants = membres.filter((m) => !parUid.has(m.uid));
@@ -709,10 +873,21 @@ function SuiviOnglet({ membres, cotisants, annee }: { membres: MembreLeger[]; co
         {cot.length === 0 && <p className="text-sm text-muted">Personne pour l’instant.</p>}
         {cot.map((m) => {
           const s = statutCotisation(parUid.get(m.uid)!.moisCouverts, annee);
+          const texte = s.aJour
+            ? `Bonjour ${m.prenom}, merci pour votre cotisation à la caisse solidaire RRTE : vous êtes à jour. ${s.texte}. Que Dieu vous le rende !`
+            : `Bonjour ${m.prenom}, petit rappel amical : votre cotisation à la caisse solidaire RRTE arrive à échéance (${s.texte.toLowerCase()}). Vous pouvez la renouveler dans l’application, rubrique Caisse solidaire. Merci !`;
+          const lien = lienWhatsAppVers(m.telephone, texte);
           return (
             <div key={m.uid} className="flex items-center gap-3 text-sm">
               <span className="flex-1">{m.prenom} {m.nom}</span>
               <span className={`text-xs ${s.aJour ? "font-semibold text-emerald-700" : "text-muted"}`}>{s.texte}</span>
+              {lien ? (
+                <a href={lien} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-gold-700">
+                  <MessageCircle size={14} /> {s.aJour ? "Remercier" : "Relancer"}
+                </a>
+              ) : (
+                <span className="text-xs text-muted">Pas de numéro</span>
+              )}
             </div>
           );
         })}
@@ -720,12 +895,24 @@ function SuiviOnglet({ membres, cotisants, annee }: { membres: MembreLeger[]; co
       <section className="card space-y-2 p-4">
         <h2 className="font-display text-base font-bold">Pas encore cotisé ({nonCotisants.length})</h2>
         <p className="text-xs text-muted">Visible de l’équipe de la caisse et des administrateurs seulement.</p>
-        {nonCotisants.map((m) => (
-          <div key={m.uid} className="flex items-center gap-3 text-sm">
-            <span className="flex-1">{m.prenom} {m.nom}</span>
-            <span className="text-xs text-muted">{m.telephone ?? ""}</span>
-          </div>
-        ))}
+        {nonCotisants.map((m) => {
+          const lien = lienWhatsAppVers(
+            m.telephone,
+            `Bonjour ${m.prenom}, la caisse solidaire RRTE est ouverte : cotisation de ${fcfa(MONTANT_MENSUEL)} par mois, à régler par trimestre, semestre ou année. Elle est volontaire. Les détails et le paiement sont dans l’application, rubrique Caisse solidaire. Merci !`
+          );
+          return (
+            <div key={m.uid} className="flex items-center gap-3 text-sm">
+              <span className="flex-1">{m.prenom} {m.nom}</span>
+              {lien ? (
+                <a href={lien} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-gold-700">
+                  <MessageCircle size={14} /> Inviter
+                </a>
+              ) : (
+                <span className="text-xs text-muted">Pas de numéro</span>
+              )}
+            </div>
+          );
+        })}
       </section>
     </div>
   );

@@ -18,7 +18,7 @@ const ARTICLES: [string, string[]][] = [
     "Cotisation",
     [
       `La cotisation est de ${fcfa(MONTANT_MENSUEL)} par mois, soit ${fcfa(MONTANT_MENSUEL * 12)} par année civile (de janvier à décembre). Elle commence en janvier 2027.`,
-      "Elle est volontaire. Chaque membre choisit son rythme : chaque mois, tous les 2 mois, chaque trimestre, chaque semestre ou une fois par an.",
+      "Elle est volontaire. Chaque membre choisit son rythme : chaque trimestre (6 000 FCFA), chaque semestre (12 000 FCFA) ou une fois par an (24 000 FCFA).",
     ],
   ],
   [

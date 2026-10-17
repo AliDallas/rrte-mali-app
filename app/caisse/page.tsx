@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "firebase/firestore";
-import { Baby, ChevronLeft, ChevronRight, HeartHandshake, LifeBuoy, Wallet, ShieldCheck, Users, CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Baby, BarChart3, ChevronLeft, ChevronRight, HeartHandshake, LifeBuoy, Wallet, ShieldCheck, Users, CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import CaisseAcces from "@/components/CaisseAcces";
 import { db } from "@/lib/firebase";
@@ -79,7 +79,7 @@ function CaisseContenu() {
           </p>
           <div className="rounded-xl bg-gold-500/10 p-3 text-[15px]">
             <b>Cotisation : {fcfa(MONTANT_MENSUEL)} par mois</b>, soit {fcfa(MONTANT_MENSUEL * 12)} sur l’année civile. Elle commence en janvier 2027.
-            Vous choisissez de payer chaque mois, tous les 2 mois, chaque trimestre, chaque semestre ou une fois par an.
+            Vous choisissez de payer chaque trimestre, chaque semestre ou une fois par an.
           </div>
           <p className="text-[15px]">
             <b>Elle n’est pas obligatoire.</b> Un membre à jour de sa cotisation participe sans frais supplémentaires aux activités financées par la caisse.
@@ -155,6 +155,15 @@ function CaisseContenu() {
             <ChevronRight size={18} className="text-muted" />
           </Link>
         )}
+
+        <Link href="/caisse/bilan" className="card flex items-center gap-3 p-4">
+          <BarChart3 size={20} className="text-gold-700" strokeWidth={1.75} />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">Bilan de l’année</p>
+            <p className="text-xs text-muted">Compte rendu : encaissé, dépensé, aides, solde</p>
+          </div>
+          <ChevronRight size={18} className="text-muted" />
+        </Link>
 
         <section className="card space-y-3 p-5">
           <h2 className="font-display text-lg font-bold">Les comptes</h2>
