@@ -37,7 +37,6 @@ export default function CoursDetailPage() {
   async function supprimer() {
     if (!id) return;
     await deleteDoc(doc(db, "cours", id));
-    viderCache("cours");
     router.push("/cours");
   }
 
