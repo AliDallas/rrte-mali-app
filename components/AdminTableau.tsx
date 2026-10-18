@@ -47,6 +47,7 @@ const CONSEIL: Record<string, string> = {
   voyages: "Valider les offres de voyageurs",
   immobilier: "Valider les annonces immobilières",
   restos: "Valider les restaurants proposés",
+  fil: "Valider les publications du fil d’actualité",
 };
 
 export default function AdminTableau({

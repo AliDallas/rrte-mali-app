@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { collection, deleteDoc, doc, getDoc, getDocs, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
-import { CalendarCheck, ChevronLeft, Clock, ExternalLink, MapPin, MessageCircle, Pencil, Phone, Star, Trash2 } from "lucide-react";
+import { CalendarPlus, ChevronLeft, Clock, ExternalLink, MapPin, MessageCircle, Pencil, Phone, Star, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Etoiles from "@/components/Etoiles";
 import SignalerBouton from "@/components/SignalerBouton";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { AvisResto, CATEGORIES_MENU, Plat, Resto, lirePhotosResto, moyenneResto, prixFcfa, restoDepuisDoc } from "@/lib/restaurants";
+import { AvisResto, CATEGORIES_MENU, Plat, PlatJour, Resto, aujourdhui, lireMenuJour, lirePhotosResto, moyenneResto, prixFcfa, restoDepuisDoc } from "@/lib/restaurants";
 import { idYoutube, plateforme } from "@/lib/liens";
 import { chiffres } from "@/lib/fiches";
 import { viderCache } from "@/lib/cache";
@@ -21,6 +21,7 @@ export default function RestoDetailPage() {
   const { user, profile } = useAuth();
   const [r, setR] = useState<Resto | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [jour, setJour] = useState<PlatJour[]>([]);
   const [avis, setAvis] = useState<AvisResto[]>([]);
   const [state, setState] = useState<"loading" | "ok" | "absent">("loading");
   const [note, setNote] = useState(0);
@@ -45,6 +46,8 @@ export default function RestoDetailPage() {
     }
     setState("ok");
     lirePhotosResto(id).then(setPhotos);
+    setJour([]);
+    if (restoDepuisDoc(s.id, s.data()).menuJourDate === aujourdhui()) lireMenuJour(id).then((m) => m.date === aujourdhui() && setJour(m.items));
   }, [id, user]);
 
   useEffect(() => {
@@ -110,7 +113,7 @@ export default function RestoDetailPage() {
       if (items.length) parCategorie.push([c, items]);
     });
   }
-  const msgResa = r ? encodeURIComponent(`Bonjour, je vous contacte via l’application RRTE pour réserver une table chez ${r.nom}. Date et heure : … Nombre de personnes : …`) : "";
+  const msgWa = r ? encodeURIComponent(`Bonjour, je vous contacte via l’application RRTE au sujet de ${r.nom}.`) : "";
 
   return (
     <AppShell title={r?.nom || "Restaurant"} subtitle={r?.cuisine || "Restaurants"}>
@@ -196,19 +199,46 @@ export default function RestoDetailPage() {
                 </a>
               </div>
               <a
-                href={`https://wa.me/${chiffres(r.tel)}?text=${msgResa}`}
+                href={`https://wa.me/${chiffres(r.tel)}?text=${msgWa}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-semibold text-ink-fg"
               >
-                <CalendarCheck size={16} /> Réserver une table sur WhatsApp
+                <MessageCircle size={16} /> Écrire sur WhatsApp
               </a>
+            </div>
+          )}
+
+          {peutGerer && (
+            <Link href={`/restaurants/${r.id}/aujourdhui`} className="btn-gold flex items-center justify-center gap-2">
+              <CalendarPlus size={16} /> {jour.length > 0 ? "Modifier le menu d’aujourd’hui" : "Publier le menu d’aujourd’hui"}
+            </Link>
+          )}
+
+          {jour.length > 0 && (
+            <div className="card divide-y divide-line border-l-4 border-brand-red">
+              <p className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-red">Au menu aujourd’hui</p>
+              {jour.map((p, k) => (
+                <div key={k} className="flex items-start justify-between gap-3 px-4 py-3">
+                  {p.photo && (
+                    <button type="button" onClick={() => setZoom(p.photo)} aria-label={`Agrandir la photo de ${p.nom}`} className="flex-none">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.photo} alt="" className="h-16 w-16 rounded-xl object-cover" />
+                    </button>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{p.nom}</p>
+                    {p.desc && <p className="text-sm text-muted">{p.desc}</p>}
+                  </div>
+                  {p.prix > 0 && <p className="flex-none text-sm font-semibold">{prixFcfa(p.prix)}</p>}
+                </div>
+              ))}
             </div>
           )}
 
           {parCategorie.length > 0 && (
             <div className="space-y-3">
-              <h2 className="font-display text-lg font-bold">Menu</h2>
+              <h2 className="font-display text-lg font-bold">La carte</h2>
               {parCategorie.map(([cat, plats]) => (
                 <div key={cat} className="card divide-y divide-line">
                   <p className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gold-700">{cat}</p>

@@ -123,6 +123,26 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
+    // Fil d'actualité : tout membre actif peut publier (texte, photos, liens) ; publication visible après validation par un administrateur.
+    match /fil/{fid} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+      allow update: if isAdmin() ||
+        (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente')) ||
+        (isActiveMember() && resource.data.get('statut', 'en_attente') == 'valide' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['aimes']));
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+
+      match /medias/{mediaId} {
+        allow read: if isActiveMember();
+        allow write: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/fil/$(fid)).data.ownerUid == request.auth.uid);
+      }
+    }
+
     // Loisirs : bonnes adresses, sorties, liens vidéo et photos (rangées dans "medias")
     match /loisirs/{lid} {
       allow read: if isActiveMember();

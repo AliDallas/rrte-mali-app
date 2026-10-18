@@ -7,7 +7,7 @@ import { MapPin, Plus, Search, Star, Utensils } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { CUISINES, Resto, moyenneResto, restoDepuisDoc } from "@/lib/restaurants";
+import { CUISINES, Resto, aujourdhui, moyenneResto, restoDepuisDoc } from "@/lib/restaurants";
 import { ecrireCache, lireCache } from "@/lib/cache";
 
 export default function RestaurantsPage() {
@@ -103,7 +103,11 @@ export default function RestaurantsPage() {
                 <Star size={13} className="fill-gold-500 text-gold-500" />
                 {r.nbAvis > 0 ? `${moyenneResto(r).toFixed(1)} · ${r.nbAvis} avis` : "Pas encore noté"}
               </p>
-              {r.platDuJour && <p className="mt-1 truncate text-xs font-semibold text-brand-red">Plat du jour : {r.platDuJour}</p>}
+              {r.menuJourDate === aujourdhui() && r.menuJourResume ? (
+                <p className="mt-1 truncate text-xs font-semibold text-brand-red">Aujourd’hui : {r.menuJourResume}</p>
+              ) : (
+                r.platDuJour && <p className="mt-1 truncate text-xs font-semibold text-brand-red">Plat du jour : {r.platDuJour}</p>
+              )}
               {r.statut === "en_attente" && <p className="mt-1 text-xs font-semibold text-brand-red">En attente de validation</p>}
             </div>
           </Link>

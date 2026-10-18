@@ -34,6 +34,8 @@ export interface Resto {
   liens: string[];
   menu: Plat[];
   platDuJour: string;
+  menuJourDate: string;
+  menuJourResume: string;
   vignette: string;
   ownerUid: string;
   ownerNom: string;
@@ -70,6 +72,8 @@ export function restoDepuisDoc(id: string, x: Record<string, unknown>): Resto {
     liens: a(x.liens),
     menu,
     platDuJour: s(x.platDuJour),
+    menuJourDate: s(x.menuJourDate),
+    menuJourResume: s(x.menuJourResume),
     vignette: s(x.vignette),
     ownerUid: s(x.ownerUid),
     ownerNom: s(x.ownerNom),
@@ -99,5 +103,42 @@ export async function lirePhotosResto(id: string): Promise<string[]> {
     return Array.isArray(p) ? (p as string[]) : [];
   } catch {
     return [];
+  }
+}
+
+// ---------- Menu du jour (publié chaque jour par le restaurateur) ----------
+export const MAX_PLATS_JOUR = 12;
+
+export interface PlatJour {
+  nom: string;
+  prix: number;
+  desc: string;
+  photo: string;
+}
+
+/** Date du jour au format AAAA-MM-JJ (heure de l'appareil). */
+export function aujourdhui(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export async function lireMenuJour(id: string): Promise<{ date: string; items: PlatJour[] }> {
+  try {
+    const s = await getDoc(doc(db, "restos", id, "medias", "jour"));
+    if (!s.exists()) return { date: "", items: [] };
+    const x = s.data();
+    const items = Array.isArray(x.items)
+      ? (x.items as Record<string, unknown>[])
+          .map((p) => ({
+            nom: typeof p?.nom === "string" ? p.nom : "",
+            prix: typeof p?.prix === "number" ? p.prix : 0,
+            desc: typeof p?.desc === "string" ? p.desc : "",
+            photo: typeof p?.photo === "string" ? p.photo : "",
+          }))
+          .filter((p) => p.nom)
+      : [];
+    return { date: typeof x.date === "string" ? x.date : "", items };
+  } catch {
+    return { date: "", items: [] };
   }
 }

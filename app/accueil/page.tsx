@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
-import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping, Luggage, PartyPopper, ThumbsUp, Plus, Sparkles, FileText, HeartHandshake, Building2, Wallet } from "lucide-react";
+import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping, Luggage, PartyPopper, ThumbsUp, Plus, Sparkles, FileText, HeartHandshake, Building2, Wallet, Newspaper } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
@@ -41,6 +41,7 @@ export default function AccueilPage() {
   }, [profile, isAdmin]);
 
   const tiles = [
+    { href: "/fil", label: "Fil d’actualité", hint: "Les nouvelles du groupe", Icon: Newspaper, fond: "from-[#F08A3C] to-[#C25A10]", grand: true },
     { href: "/evenements", label: "Événements", hint: "RRTE et entre membres", Icon: CalendarDays, fond: "from-[#E8604C] to-[#B5321F]", grand: true },
     { href: "/demarches", label: "Démarches & papiers", hint: "État civil, mariage, passeport, visas", Icon: FileText, fond: "from-[#8A5CC0] to-[#5B3190]", grand: true },
     { href: "/voyages", label: "Voyageurs & bagages", hint: "Kilos et valises", Icon: Luggage, fond: "from-[#2A92D0] to-[#0F5A8C]", grand: true },
@@ -54,10 +55,11 @@ export default function AccueilPage() {
     { href: "/entreprises", label: "Entreprises", hint: "Activités des membres", Icon: Briefcase, fond: "from-[#7DB85F] to-[#4A8030]" },
     { href: "/prestataires", label: "Recommandés", hint: "Contacts de confiance", Icon: ThumbsUp, fond: "from-[#5C6168] to-[#26292D]" },
     { href: "/loisirs", label: "Loisirs", hint: "Sorties et bonnes adresses", Icon: PartyPopper, fond: "from-[#EE8A6B] to-[#D84A38]" },
-    { href: "/restaurants", label: "Restaurants", hint: "Menus et réservations", Icon: Utensils, fond: "from-[#4FA9DD] to-[#1A7AB8]" },
+    { href: "/restaurants", label: "Restaurants", hint: "Menus du jour", Icon: Utensils, fond: "from-[#4FA9DD] to-[#1A7AB8]" },
   ];
 
   const actions = [
+    { href: "/fil/nouveau", label: "Publication", couleur: "bg-[#C25A10]" },
     { href: "/evenements/proposer", label: "Événement", couleur: "bg-[#5B3190]" },
     { href: "/demandes/nouvelle", label: "Demande", couleur: "bg-brand-red" },
     { href: "/voyages/nouveau", label: "Voyage", couleur: "bg-brand-blue" },
