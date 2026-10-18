@@ -311,6 +311,30 @@ service cloud.firestore {
           request.resource.data.auteurUid == request.auth.uid && request.resource.data.data.size() < 400000;
         allow delete: if isActiveMember() && resource.data.get('auteurUid', '') == request.auth.uid;
       }
+
+      // Covoiturage : activé par un administrateur sur l'événement ; chaque membre y indique ses places disponibles (un document par membre)
+      match /covoiturage/{cid} {
+        allow read: if isActiveMember();
+        allow create, update: if isActiveMember() && cid == request.auth.uid && request.resource.data.uid == request.auth.uid &&
+          get(/databases/$(database)/documents/events/$(eventId)).data.get('covoiturage', false) == true &&
+          request.resource.data.places is int && request.resource.data.places >= 0 && request.resource.data.places <= 8;
+        allow delete: if isAdmin() || (isSignedIn() && cid == request.auth.uid);
+      }
+
+      // Sondages (présence, dates, options) : créés par l'organisateur de l'événement ou un administrateur ; un vote par membre
+      match /sondages/{sid} {
+        allow read: if isActiveMember();
+        allow create, delete: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/events/$(eventId)).data.created_by == request.auth.uid);
+        allow update: if false;
+
+        match /votes/{vid} {
+          allow read: if isActiveMember();
+          allow create, update: if isActiveMember() && vid == request.auth.uid && request.resource.data.uid == request.auth.uid;
+          allow delete: if isAdmin() || (isSignedIn() && vid == request.auth.uid) || (isActiveMember() &&
+            get(/databases/$(database)/documents/events/$(eventId)).data.created_by == request.auth.uid);
+        }
+      }
     }
 
     // Offres d'emploi / Services B2B : réservé aux membres actifs

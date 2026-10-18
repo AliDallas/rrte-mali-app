@@ -130,3 +130,13 @@ export function lireCsv(texte: string): Record<string, string>[] {
 export function ficheIncomplete(f: Pick<Fiche, "activite" | "competences">): boolean {
   return !f.activite.trim() && !f.competences.trim();
 }
+
+/** Badge « Fiche complète » : tous les champs essentiels de la fiche de renseignements sont remplis. */
+export function ficheComplete(f: Pick<Fiche, "prenom" | "nom" | "tels" | "email" | "ville" | "activite" | "competences" | "anciennete" | "photo" | "logo">): boolean {
+  return !![f.prenom, f.nom, f.email, f.ville, f.activite, f.competences, f.anciennete].every((v) => v.trim()) && f.tels.some((t) => t.trim()) && !!(f.photo || f.logo);
+}
+
+/** Badge « Nouveau membre » : inscrit depuis moins de 30 jours. */
+export function nouveauMembre(f: Pick<Fiche, "inscritLe">): boolean {
+  return f.inscritLe > 0 && Date.now() - f.inscritLe < 30 * 24 * 3600 * 1000;
+}

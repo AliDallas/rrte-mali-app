@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Badges from "@/components/Badges";
-import { ficheIncomplete, ficheDepuisDoc } from "@/lib/fiches";
+import { ficheComplete, ficheIncomplete, ficheDepuisDoc, nouveauMembre } from "@/lib/fiches";
 import { ScrollText, LogOut, ShieldCheck, ChevronRight, Mail, Pencil, UserMinus } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import NousContacter from "@/components/NousContacter";
@@ -17,6 +17,8 @@ export default function ProfilPage() {
   const { profile, logout } = useAuth();
   const router = useRouter();
   const [incomplete, setIncomplete] = useState(false);
+  const [badgeComplet, setBadgeComplet] = useState(false);
+  const [badgeNouveau, setBadgeNouveau] = useState(false);
   const [enAttente, setEnAttente] = useState(0);
   const uid = profile?.uid;
   const admin = profile?.role === "admin";
@@ -28,6 +30,8 @@ export default function ProfilPage() {
         if (r.empty) return;
         const f = ficheDepuisDoc(r.docs[0].id, r.docs[0].data());
         setIncomplete(ficheIncomplete(f));
+        setBadgeComplet(ficheComplete(f));
+        setBadgeNouveau(nouveauMembre(f));
       })
       .catch(() => undefined);
     if (admin) {
@@ -53,7 +57,7 @@ export default function ProfilPage() {
           <p className="flex items-center gap-1.5 truncate text-sm text-muted">
             <Mail size={14} /> {profile?.email}
           </p>
-          <div className="mt-1.5"><Badges admin={admin} compact /></div>
+          <div className="mt-1.5"><Badges admin={admin} compact complete={badgeComplet} nouveau={badgeNouveau} /></div>
         </div>
       </div>
 

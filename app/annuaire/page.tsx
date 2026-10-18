@@ -10,7 +10,7 @@ import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { Fiche, chiffres, ficheDepuisDoc, ficheIncomplete, nomComplet } from "@/lib/fiches";
+import { Fiche, chiffres, ficheComplete, ficheDepuisDoc, ficheIncomplete, nomComplet, nouveauMembre } from "@/lib/fiches";
 import { ecrireCache, lireCache } from "@/lib/cache";
 
 function norm(s: string) {
@@ -225,7 +225,7 @@ export default function AnnuairePage() {
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${f.uid ? "bg-emerald-600 text-white" : "bg-gray-200 text-muted"}`}>
                 {f.uid ? "Compte créé" : "Pas encore inscrit"}
               </span>
-              {f.admin && <Badges admin compact />}
+              {(f.admin || ficheComplete(f) || nouveauMembre(f)) && <Badges admin={f.admin} compact complete={ficheComplete(f)} nouveau={nouveauMembre(f)} />}
               {f.activite && <p className="line-clamp-2 text-xs text-muted">{f.activite}</p>}
               {f.cherche && <p className="line-clamp-2 text-xs"><span className="font-semibold text-gold-700">Cherche :</span> {f.cherche}</p>}
               {f.propose && <p className="line-clamp-2 text-xs"><span className="font-semibold text-gold-700">Propose :</span> {f.propose}</p>}

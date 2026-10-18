@@ -7,6 +7,8 @@ import { QueryDocumentSnapshot, arrayRemove, arrayUnion, deleteDoc, doc, getDoc,
 import { ChevronLeft, Clock, ExternalLink, ImagePlus, X, MapPin, MessageCircle, Phone, Trash2, Users, Wallet } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import SignalerBouton from "@/components/SignalerBouton";
+import Covoiturage from "@/components/Covoiturage";
+import Sondages from "@/components/Sondages";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import { EventItem, MAX_PHOTOS_GALERIE, PhotoGalerie, ajouterPhotoGalerie, eventDepuisDoc, isUpcoming, compterGalerie, lireGalerie, lirePhotosEvent, longDate } from "@/lib/events";
@@ -300,6 +302,12 @@ export default function EvenementDetailPage() {
             >
               {going ? "Je ne viens plus" : "Je m’inscris"}
             </button>
+          )}
+
+          {ev.statut !== "en_attente" && <Sondages eventId={ev.id} peutCreer={isAdmin || ev.created_by === user?.uid} />}
+
+          {ev.statut !== "en_attente" && (isUpcoming(ev.date) || ev.covoiturage) && (
+            <Covoiturage eventId={ev.id} titre={ev.titre} actif={ev.covoiturage} onActive={(v) => setEv({ ...ev, covoiturage: v })} />
           )}
 
           {membres && (

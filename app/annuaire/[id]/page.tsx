@@ -13,7 +13,7 @@ import { donneesDepuisFiche } from "@/lib/presentation";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import SignalerBouton from "@/components/SignalerBouton";
-import { Fiche, chiffres, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
+import { Fiche, chiffres, ficheComplete, ficheDepuisDoc, nomComplet, nouveauMembre } from "@/lib/fiches";
 import { Entreprise, entrepriseDepuisDoc } from "@/lib/entreprises";
 
 function Bloc({ titre, texte }: { titre: string; texte: string }) {
@@ -73,7 +73,7 @@ export default function FicheDetailPage() {
                 <p className="text-sm text-muted">{[fiche.ville, fiche.pays].filter(Boolean).join(" · ")}</p>
               )}
             </div>
-            <Badges admin={!!fiche.admin} />
+            <Badges admin={!!fiche.admin} complete={ficheComplete(fiche)} nouveau={nouveauMembre(fiche)} />
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${fiche.uid ? "bg-emerald-600 text-white" : "bg-gray-200 text-muted"}`}>
               {fiche.uid ? "Compte créé sur l’application" : "Pas encore inscrit sur l’application"}
             </span>

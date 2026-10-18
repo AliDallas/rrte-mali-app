@@ -24,6 +24,7 @@ export interface EventItem {
   liens: string[];
   vignette: string;
   statut: "valide" | "en_attente";
+  covoiturage: boolean;
 }
 
 export const TYPES_EVENEMENT_MEMBRES = [
@@ -57,6 +58,7 @@ export function eventDepuisDoc(id: string, x: Record<string, unknown>): EventIte
     liens: Array.isArray(x.liens) ? (x.liens as unknown[]).filter((l): l is string => typeof l === "string") : [],
     vignette: s(x.vignette),
     statut: x.statut === "en_attente" ? "en_attente" : "valide",
+    covoiturage: x.covoiturage === true,
   };
 }
 
