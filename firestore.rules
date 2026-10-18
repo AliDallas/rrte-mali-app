@@ -143,6 +143,13 @@ service cloud.firestore {
       }
     }
 
+    // Présence : « vu à telle heure » de chaque membre actif ; lisible uniquement par les administrateurs
+    match /presence/{pid} {
+      allow read: if isAdmin();
+      allow create, update: if isActiveMember() && pid == request.auth.uid && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin() || (isSignedIn() && pid == request.auth.uid);
+    }
+
     // Loisirs : bonnes adresses, sorties, liens vidéo et photos (rangées dans "medias")
     match /loisirs/{lid} {
       allow read: if isActiveMember();

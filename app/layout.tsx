@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
+import PresenceBeat from "@/components/PresenceBeat";
 
 export const metadata: Metadata = {
   title: "RRTE MALI APP",
@@ -29,7 +30,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <PresenceBeat />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

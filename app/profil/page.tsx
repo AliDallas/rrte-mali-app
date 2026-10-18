@@ -94,6 +94,12 @@ export default function ProfilPage() {
         <ChevronRight size={18} className="text-muted" />
       </Link>
 
+      <Link href="/confidentialite" className="card mb-4 flex items-center gap-3 p-4">
+        <ScrollText size={20} className="text-gold-700" strokeWidth={1.75} />
+        <span className="flex-1 font-semibold">Confidentialité et vos données</span>
+        <ChevronRight size={18} className="text-muted" />
+      </Link>
+
       <div className="mb-4">
         <NousContacter />
       </div>

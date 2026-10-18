@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { BellRing, Check, FileSpreadsheet, Flag, Inbox, LayoutDashboard, ShieldCheck, UserCheck, Users, Wrench, X } from "lucide-react";
+import { Activity, BellRing, Check, FileSpreadsheet, Flag, Inbox, LayoutDashboard, ShieldCheck, UserCheck, Users, Wrench, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
@@ -266,6 +266,13 @@ export default function AdminPage() {
               <p className="text-xs text-muted">Tout ce qui attend une validation, par rubrique</p>
             </div>
           </Link>
+      <Link href="/admin/activite" className="card flex items-center gap-3 p-4">
+          <Activity className="text-gold-600" size={22} strokeWidth={1.75} />
+          <div className="flex-1">
+            <p className="font-semibold">Activité des membres</p>
+            <p className="text-xs text-muted">Qui est en ligne, dernières connexions</p>
+          </div>
+        </Link>
       {(
         <Link href="/admin/administrateurs" className="card flex items-center gap-3 p-4">
           <ShieldCheck className="text-gold-600" size={22} strokeWidth={1.75} />

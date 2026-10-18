@@ -89,8 +89,10 @@ export default function ReglementPage() {
           </p>
           <p className="text-[15px]">
             Sur demande, les administrateurs retirent la personne du groupe WhatsApp, ferment son accès à l’application et suppriment sa fiche
-            ainsi que, si elle le souhaite, ses publications, puis lui confirment par message. Vos informations ne sont jamais conservées
-            après une demande de suppression.
+            ainsi que, si elle le souhaite, ses publications, puis lui confirment par message. Vos informations personnelles ne sont plus conservées
+            après une demande de suppression, à l’exception des écritures comptables de la caisse (montants et reçus), gardées pour la transparence des comptes.
+            Le détail est dans la page{" "}
+            <a href="/confidentialite" className="font-semibold text-gold-700 underline">Confidentialité</a>.
           </p>
         </section>
       </div>
