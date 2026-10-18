@@ -193,6 +193,23 @@ service cloud.firestore {
       }
     }
 
+    // Écoles & cours : écoles, centres et cours des membres, validés par un administrateur
+    match /cours/{cid} {
+      allow read: if isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+      allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente'));
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
+
+      match /medias/{mediaId} {
+        allow read: if isActiveMember();
+        allow write: if isAdmin() || (isActiveMember() &&
+          get(/databases/$(database)/documents/cours/$(cid)).data.ownerUid == request.auth.uid);
+      }
+    }
+
     // Restaurants : fiches et menus gérés par les restaurateurs (validés par un administrateur), avis des membres
     match /restos/{rid} {
       allow read: if isActiveMember();

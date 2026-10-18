@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { collection, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
-import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping, Luggage, PartyPopper, ThumbsUp, Plus, Sparkles, FileText, HeartHandshake, Building2, Wallet, Newspaper } from "lucide-react";
+import { ChevronRight, Users, Briefcase, Utensils, CalendarDays, ShieldCheck, HandHelping, Luggage, PartyPopper, ThumbsUp, Plus, Sparkles, FileText, HeartHandshake, Building2, Wallet, Newspaper, GraduationCap } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useAuth } from "@/lib/AuthContext";
 import { db } from "@/lib/firebase";
@@ -54,6 +54,7 @@ export default function AccueilPage() {
     { href: "/annuaire", label: "Membres", hint: actifs !== null ? `${actifs} inscrits` : "Annuaire", Icon: Users, fond: "from-[#2FB5A8] to-[#1B7F76]" },
     { href: "/entreprises", label: "Entreprises", hint: "Activités des membres", Icon: Briefcase, fond: "from-[#7DB85F] to-[#4A8030]" },
     { href: "/prestataires", label: "Recommandés", hint: "Contacts de confiance", Icon: ThumbsUp, fond: "from-[#5C6168] to-[#26292D]" },
+    { href: "/cours", label: "Écoles & cours", hint: "Cours, écoles, formations", Icon: GraduationCap, fond: "from-[#5B8DEF] to-[#2E5BB8]" },
     { href: "/loisirs", label: "Loisirs", hint: "Sorties et bonnes adresses", Icon: PartyPopper, fond: "from-[#EE8A6B] to-[#D84A38]" },
     { href: "/restaurants", label: "Restaurants", hint: "Menus du jour", Icon: Utensils, fond: "from-[#4FA9DD] to-[#1A7AB8]" },
   ];

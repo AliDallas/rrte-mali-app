@@ -46,6 +46,7 @@ const CONSEIL: Record<string, string> = {
   events: "Valider les événements proposés",
   voyages: "Valider les offres de voyageurs",
   immobilier: "Valider les annonces immobilières",
+  cours: "Valider les écoles et cours proposés",
   restos: "Valider les restaurants proposés",
   fil: "Valider les publications du fil d’actualité",
 };

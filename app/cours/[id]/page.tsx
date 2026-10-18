@@ -1,0 +1,151 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { ChevronLeft, Clock, ExternalLink, MapPin, MessageCircle, Tag, Trash2, Users } from "lucide-react";
+import AppShell from "@/components/AppShell";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/AuthContext";
+import SignalerBouton from "@/components/SignalerBouton";
+import { Cours, coursDepuisDoc, libelleTypeCours, lirePhotosCours } from "@/lib/cours";
+import { lienWhatsAppVers } from "@/lib/contact";
+import { idYoutube, plateforme } from "@/lib/liens";
+
+export default function CoursDetailPage() {
+  const id = useParams<{ id: string }>()?.id;
+  const router = useRouter();
+  const { user, profile } = useAuth();
+  const [l, setL] = useState<Cours | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [state, setState] = useState<"loading" | "ok" | "absent">("loading");
+  const [confirm, setConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!id || profile?.statut !== "actif") return;
+    getDoc(doc(db, "cours", id))
+      .then((s) => {
+        if (!s.exists()) return setState("absent");
+        setL(coursDepuisDoc(s.id, s.data()));
+        setState("ok");
+        lirePhotosCours(id).then(setPhotos);
+      })
+      .catch(() => setState("absent"));
+  }, [id, profile]);
+
+  async function supprimer() {
+    if (!id) return;
+    await deleteDoc(doc(db, "cours", id));
+    viderCache("cours");
+    router.push("/cours");
+  }
+
+  async function valider() {
+    if (!id) return;
+    await updateDoc(doc(db, "cours", id), { statut: "valide" });
+    setL((x) => (x ? { ...x, statut: "valide" } : x));
+  }
+
+  const peutGerer = !!l && (profile?.role === "admin" || l.ownerUid === user?.uid);
+  const videos = (l?.liens ?? []).map(idYoutube).filter(Boolean);
+
+  return (
+    <AppShell title={l?.titre || "École ou cours"} subtitle={l ? [libelleTypeCours(l.type), l.matiere].filter(Boolean).join(" · ") : "Partagé par un membre"}>
+      <Link href="/cours" className="mb-4 inline-flex items-center gap-1 text-sm text-muted">
+        <ChevronLeft size={16} /> Écoles & cours
+      </Link>
+      {state === "loading" && <p className="text-center text-muted">Chargement...</p>}
+      {state === "absent" && <p className="card p-6 text-center text-muted">Fiche introuvable ou supprimée.</p>}
+      {state === "ok" && l && (
+        <div className="space-y-4">
+          {photos.length > 0 && (
+            <div className="flex snap-x gap-2 overflow-x-auto">
+              {photos.map((p, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={p} alt="" className="h-56 w-[85%] flex-none snap-center rounded-2xl object-cover" />
+              ))}
+            </div>
+          )}
+          {l.statut === "en_attente" && (
+            <div className="card border-brand-red p-4 text-sm">
+              <p className="font-semibold text-brand-red">En attente de validation par un administrateur.</p>
+              {profile?.role === "admin" && (
+                <button onClick={valider} className="btn-gold mt-3">Valider et publier</button>
+              )}
+            </div>
+          )}
+          <div className="card space-y-2 p-5">
+            {l.description && <p className="whitespace-pre-line text-[15px]">{l.description}</p>}
+            {l.lieu && (
+              <p className="flex items-center gap-2 text-sm"><MapPin size={16} className="text-gold-600" /> {l.lieu}</p>
+            )}
+            {l.horaires && (
+              <p className="flex items-center gap-2 text-sm"><Clock size={16} className="text-gold-600" /> {l.horaires}</p>
+            )}
+            {l.prix && (
+              <p className="flex items-center gap-2 text-sm"><Tag size={16} className="text-gold-600" /> {l.prix}</p>
+            )}
+            {l.niveau && (
+              <p className="flex items-center gap-2 text-sm"><Users size={16} className="text-gold-600" /> {l.niveau}</p>
+            )}
+            {l.ownerNom && <p className="text-xs font-semibold text-gold-700">Publié par {l.ownerNom}</p>}
+          </div>
+
+          {(() => {
+            const wa = lienWhatsAppVers(l.telephone, `Bonjour, je vous contacte via l’application RRTE au sujet de « ${l.titre} ».`);
+            return wa ? (
+              <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-gold flex items-center justify-center gap-2">
+                <MessageCircle size={18} /> S’inscrire / demander des infos sur WhatsApp
+              </a>
+            ) : null;
+          })()}
+
+          {videos.map((v) => (
+            <div key={v} className="overflow-hidden rounded-2xl">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${v}`}
+                title="Vidéo YouTube"
+                className="aspect-video w-full"
+                allow="encrypted-media; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
+          ))}
+
+          {l.liens.length > 0 && (
+            <div className="card divide-y divide-line">
+              {l.liens.map((u) => (
+                <a key={u} href={u} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-3 px-4 py-3">
+                  <ExternalLink size={17} className="text-gold-600" />
+                  <span className="flex-1 text-[15px] font-semibold">Ouvrir sur {plateforme(u)}</span>
+                </a>
+              ))}
+            </div>
+          )}
+
+          <div className="flex justify-center">
+            <SignalerBouton cibleType="fiche" cibleId={l.id} cibleNom={`Fiche « ${l.titre} »`} cibleUid={l.ownerUid} libelle="Signaler cette annonce ou ce contenu" />
+          </div>
+
+          {peutGerer &&
+            (confirm ? (
+              <div className="flex gap-2">
+                <button onClick={supprimer} className="flex-1 rounded-full bg-brand-red px-4 py-3 text-sm font-semibold text-white">
+                  Confirmer la suppression
+                </button>
+                <button onClick={() => setConfirm(false)} className="btn-outline flex-1">
+                  Annuler
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirm(true)} className="flex w-full items-center justify-center gap-2 text-sm text-muted">
+                <Trash2 size={15} /> Supprimer cette publication
+              </button>
+            ))}
+        </div>
+      )}
+    </AppShell>
+  );
+}
