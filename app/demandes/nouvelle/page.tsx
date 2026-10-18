@@ -8,8 +8,7 @@ import { ChevronLeft } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { METIERS } from "@/lib/prestataires";
-import { TypeDemande } from "@/lib/demandes";
+import { CATEGORIES_DEMANDE, CATEGORIE_EMPLOI, TypeDemande, estEmploi, libelleType } from "@/lib/demandes";
 import Suggestions from "@/components/Suggestions";
 
 const input =
@@ -63,16 +62,31 @@ export default function NouvelleDemandePage() {
       </div>
       <form onSubmit={envoyer} className="card space-y-4 p-5">
         <div className="flex gap-2">
-          <button type="button" onClick={() => setType("cherche")} className={chip(type === "cherche")}>Je cherche</button>
-          <button type="button" onClick={() => setType("propose")} className={chip(type === "propose")}>Je propose</button>
+          <button type="button" onClick={() => setType("cherche")} className={chip(type === "cherche")}>{libelleType("cherche", categorie).replace("Cherche", "Je cherche")}</button>
+          <button type="button" onClick={() => setType("propose")} className={chip(type === "propose")}>{libelleType("propose", categorie)}</button>
         </div>
+        <button
+          type="button"
+          onClick={() => setCategorie(estEmploi(categorie) ? "" : CATEGORIE_EMPLOI)}
+          className={`w-full rounded-2xl border px-4 py-2.5 text-center text-sm ${estEmploi(categorie) ? "border-gold-500 bg-gold-500/15 font-semibold" : "border-line bg-white text-muted"}`}
+        >
+          {estEmploi(categorie) ? "Annonce d’emploi : touchez pour annuler" : "C’est une annonce d’emploi ? Touchez ici"}
+        </button>
         <label className="block text-sm font-medium">
-          {type === "cherche" ? "Que cherchez-vous ?" : "Que proposez-vous ?"}
+          {estEmploi(categorie) ? (type === "cherche" ? "Quel emploi cherchez-vous ?" : "Quel poste proposez-vous ?") : type === "cherche" ? "Que cherchez-vous ?" : "Que proposez-vous ?"}
           <input
             required
             value={titre}
             onChange={(e) => setTitre(e.target.value)}
-            placeholder={type === "cherche" ? "ex. Un plombier fiable à Hamdallaye" : "ex. Livraison de repas, formation Excel"}
+            placeholder={
+              estEmploi(categorie)
+                ? type === "cherche"
+                  ? "ex. Comptable, 5 ans d’expérience, disponible à Bamako"
+                  : "ex. Chauffeur avec permis, ACI 2000, CDI"
+                : type === "cherche"
+                  ? "ex. Un plombier fiable à Hamdallaye"
+                  : "ex. Livraison de repas, formation Excel"
+            }
             className={input}
           />
         </label>
@@ -80,14 +94,14 @@ export default function NouvelleDemandePage() {
           Métier ou domaine
           <select value={categorie} onChange={(e) => setCategorie(e.target.value)} className={input}>
             <option value="">Choisir (facultatif)</option>
-            {METIERS.map((m) => (
+            {CATEGORIES_DEMANDE.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </label>
         <label className="block text-sm font-medium">
           Détails
-          <textarea rows={4} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Quartier, délai, budget…" className={input} />
+          <textarea rows={4} value={details} onChange={(e) => setDetails(e.target.value)} placeholder={estEmploi(categorie) ? "Expérience, contrat, salaire ou prétention, date de début, comment vous contacter…" : "Quartier, délai, budget…"} className={input} />
         </label>
         {msg && <p className="text-sm text-brand-red">{msg}</p>}
         <button type="submit" disabled={saving} className="btn-gold">

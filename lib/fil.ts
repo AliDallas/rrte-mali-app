@@ -60,3 +60,19 @@ export function depuis(ms: number): string {
   if (j < 7) return `il y a ${j} jours`;
   return `le ${new Date(ms).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`;
 }
+
+export const MAX_COMMENTAIRE = 600;
+
+export interface Commentaire {
+  id: string;
+  texte: string;
+  auteurUid: string;
+  auteurNom: string;
+  creeLe: number;
+}
+
+export function commentaireDepuisDoc(id: string, x: Record<string, unknown>): Commentaire {
+  const s = (v: unknown) => (typeof v === "string" ? v : "");
+  const t = x.creeLe as { seconds?: number } | null | undefined;
+  return { id, texte: s(x.texte), auteurUid: s(x.auteurUid), auteurNom: s(x.auteurNom), creeLe: t?.seconds ? t.seconds * 1000 : Date.now() };
+}

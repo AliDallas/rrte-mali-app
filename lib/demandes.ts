@@ -1,3 +1,5 @@
+import { DOMAINES } from "./domaines";
+
 export type TypeDemande = "cherche" | "propose";
 
 export interface Demande {
@@ -88,4 +90,17 @@ export function motsCles(texte: string): string[] {
         .filter((m) => m.length >= 4 && !MOTS_VIDES.has(m)),
     ),
   );
+}
+
+export const CATEGORIE_EMPLOI = "Emploi & recrutement";
+export const CATEGORIE_STAGE = "Stage & alternance";
+/** Catégories proposées dans les demandes : l'emploi d'abord, puis les métiers. */
+export const CATEGORIES_DEMANDE = [CATEGORIE_EMPLOI, CATEGORIE_STAGE, ...DOMAINES];
+
+export const estEmploi = (categorie: string) => categorie === CATEGORIE_EMPLOI || categorie === CATEGORIE_STAGE;
+
+/** « Je cherche / Je propose », ou « Je cherche un emploi / Je recrute » pour les annonces d'emploi. */
+export function libelleType(type: TypeDemande, categorie: string): string {
+  if (estEmploi(categorie)) return type === "cherche" ? (categorie === CATEGORIE_STAGE ? "Cherche un stage" : "Cherche un emploi") : "Recrute";
+  return type === "cherche" ? "Je cherche" : "Je propose";
 }

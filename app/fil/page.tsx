@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { arrayRemove, arrayUnion, collection, deleteDoc, doc, getDocs, limit, orderBy, query, updateDoc } from "firebase/firestore";
-import { ChevronLeft, ExternalLink, Heart, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ExternalLink, Heart, MessageCircle, Plus, Trash2 } from "lucide-react";
+import CommentairesFil from "@/components/CommentairesFil";
 import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import SignalerBouton from "@/components/SignalerBouton";
@@ -22,6 +23,8 @@ export default function FilPage() {
   const [photos, setPhotos] = useState<Record<string, string[]>>({});
   const [nb, setNb] = useState(PAR_PAGE);
   const [zoom, setZoom] = useState("");
+  const [ouverts, setOuverts] = useState<string[]>([]);
+  const [nbComm, setNbComm] = useState<Record<string, number>>({});
   const [erreur, setErreur] = useState("");
 
   const charger = useCallback(async () => {
@@ -132,6 +135,13 @@ export default function FilPage() {
                 <button onClick={() => aimer(p)} disabled={p.statut !== "valide"} className={`flex items-center gap-1.5 font-semibold ${aime ? "text-brand-red" : "text-muted"}`}>
                   <Heart size={18} className={aime ? "fill-brand-red" : ""} /> {p.aimes.length > 0 ? p.aimes.length : "J’aime"}
                 </button>
+                <button
+                  onClick={() => setOuverts(ouverts.includes(p.id) ? ouverts.filter((x) => x !== p.id) : [...ouverts, p.id])}
+                  disabled={p.statut !== "valide"}
+                  className={`flex items-center gap-1.5 font-semibold ${ouverts.includes(p.id) ? "text-gold-700" : "text-muted"}`}
+                >
+                  <MessageCircle size={18} /> {nbComm[p.id] ? nbComm[p.id] : "Commenter"}
+                </button>
                 <span className="flex-1" />
                 {p.ownerUid !== user?.uid && <SignalerBouton cibleType="annonce" cibleId={p.id} cibleNom={`Publication de ${p.ownerNom}`} cibleUid={p.ownerUid} libelle="Signaler" className="text-xs" />}
                 {(admin || p.ownerUid === user?.uid) && (
@@ -140,6 +150,9 @@ export default function FilPage() {
                   </button>
                 )}
               </div>
+              {ouverts.includes(p.id) && (
+                <CommentairesFil postId={p.id} ownerUid={p.ownerUid} onCount={(n) => setNbComm((c) => (c[p.id] === n ? c : { ...c, [p.id]: n }))} />
+              )}
             </article>
           );
         })}

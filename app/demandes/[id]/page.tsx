@@ -12,7 +12,7 @@ import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
 import SignalerBouton from "@/components/SignalerBouton";
-import { Demande, Reponse, demandeDepuisDoc, ilYa, motsCles, reponseDepuisDoc } from "@/lib/demandes";
+import { Demande, Reponse, demandeDepuisDoc, ilYa, motsCles, reponseDepuisDoc, libelleType } from "@/lib/demandes";
 import { Fiche, chiffres, cle, ficheDepuisDoc, nomComplet } from "@/lib/fiches";
 import { METIERS, Prestataire, prestataireDepuisDoc } from "@/lib/prestataires";
 import { lireCache, ecrireCache, viderCache } from "@/lib/cache";
@@ -195,7 +195,7 @@ export default function DemandeDetailPage() {
     ) : null;
 
   return (
-    <AppShell title="Demande" subtitle={d?.type === "propose" ? "Je propose" : "Je cherche"}>
+    <AppShell title="Demande" subtitle={d ? libelleType(d.type, d.categorie) : "Je cherche"}>
       <Link href="/demandes" className="mb-4 inline-flex items-center gap-1 text-sm text-muted">
         <ChevronLeft size={16} /> Demandes
       </Link>
@@ -206,7 +206,7 @@ export default function DemandeDetailPage() {
           <div className="card space-y-3 p-5">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${d.type === "cherche" ? "bg-brand-red/10 text-brand-red" : "bg-emerald-100 text-emerald-700"}`}>
-                {d.type === "cherche" ? "Je cherche" : "Je propose"}
+                {libelleType(d.type, d.categorie)}
               </span>
               {d.categorie && <span className="rounded-full bg-gold-100 px-2.5 py-0.5 text-xs font-semibold text-gold-700">{d.categorie}</span>}
               {d.statut === "resolue" && <span className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-semibold text-muted">Résolue</span>}

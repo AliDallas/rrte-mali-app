@@ -8,8 +8,7 @@ import AppShell from "@/components/AppShell";
 import Avatar from "@/components/Avatar";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/AuthContext";
-import { Demande, demandeDepuisDoc, ilYa } from "@/lib/demandes";
-import { METIERS } from "@/lib/prestataires";
+import { CATEGORIES_DEMANDE, CATEGORIE_EMPLOI, Demande, demandeDepuisDoc, ilYa, libelleType } from "@/lib/demandes";
 
 function norm(s: string) {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -69,9 +68,10 @@ export default function DemandesPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <button onClick={() => setType(type === "cherche" ? "" : "cherche")} className={chip(type === "cherche")}>Je cherche</button>
         <button onClick={() => setType(type === "propose" ? "" : "propose")} className={chip(type === "propose")}>Je propose</button>
+        <button onClick={() => setCat(cat === CATEGORIE_EMPLOI ? "" : CATEGORIE_EMPLOI)} className={chip(cat === CATEGORIE_EMPLOI)}>Emploi</button>
         <select value={cat} onChange={(e) => setCat(e.target.value)} className={chip(!!cat)}>
           <option value="">Métier</option>
-          {METIERS.map((m) => (
+          {CATEGORIES_DEMANDE.map((m) => (
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
@@ -90,7 +90,7 @@ export default function DemandesPage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${d.type === "cherche" ? "bg-brand-red/10 text-brand-red" : "bg-emerald-100 text-emerald-700"}`}>
-                  {d.type === "cherche" ? "Je cherche" : "Je propose"}
+                  {libelleType(d.type, d.categorie)}
                 </span>
                 {d.categorie && <span className="rounded-full bg-gold-100 px-2 py-0.5 text-[10px] font-semibold text-gold-700">{d.categorie}</span>}
                 {d.statut === "resolue" && <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold text-muted">Résolue</span>}

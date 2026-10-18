@@ -141,6 +141,17 @@ service cloud.firestore {
         allow write: if isAdmin() || (isActiveMember() &&
           get(/databases/$(database)/documents/fil/$(fid)).data.ownerUid == request.auth.uid);
       }
+
+      // Commentaires du fil : tout membre actif peut commenter une publication validée ; modération par les administrateurs
+      match /commentaires/{cid} {
+        allow read: if isActiveMember();
+        allow create: if isActiveMember() && request.resource.data.auteurUid == request.auth.uid &&
+          request.resource.data.texte is string && request.resource.data.texte.size() > 0 && request.resource.data.texte.size() <= 600 &&
+          get(/databases/$(database)/documents/fil/$(fid)).data.get('statut', 'en_attente') == 'valide';
+        allow delete: if isAdmin() || (isSignedIn() && resource.data.auteurUid == request.auth.uid) ||
+          (isSignedIn() && get(/databases/$(database)/documents/fil/$(fid)).data.ownerUid == request.auth.uid);
+        allow update: if false;
+      }
     }
 
     // Présence : « vu à telle heure » de chaque membre actif ; lisible uniquement par les administrateurs
