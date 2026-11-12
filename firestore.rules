@@ -16,6 +16,29 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // ---- Limites de taille des textes saisis par les membres (protection contre les envois démesurés) ----
+    function txt(d, cle, max) {
+      let v = d.get(cle, '');
+      return !(v is string) || v.size() <= max;
+    }
+    function lst(d, cle, max) {
+      let v = d.get(cle, []);
+      return !(v is list) || v.size() <= max;
+    }
+    function tailleOk(d) {
+      return txt(d, 'titre', 300) && txt(d, 'nom', 300) && txt(d, 'prenom', 300) &&
+        txt(d, 'description', 10000) && txt(d, 'details', 10000) && txt(d, 'texte', 10000) &&
+        txt(d, 'message', 5000) && txt(d, 'commentaire', 3000) && txt(d, 'motif', 3000) &&
+        txt(d, 'lieu', 500) && txt(d, 'adresse', 500) && txt(d, 'quartier', 300) && txt(d, 'ville', 300) &&
+        txt(d, 'telephone', 60) && txt(d, 'contact', 500) && txt(d, 'email', 320) && txt(d, 'siteWeb', 500) &&
+        txt(d, 'horaires', 1000) && txt(d, 'prix', 300) && txt(d, 'matiere', 300) && txt(d, 'niveau', 300) &&
+        txt(d, 'categorie', 300) && txt(d, 'metier', 300) && txt(d, 'cuisine', 300) &&
+        txt(d, 'compagnie', 300) && txt(d, 'depart', 300) && txt(d, 'arrivee', 300) &&
+        txt(d, 'valiseDesc', 3000) && txt(d, 'platDuJour', 1000) && txt(d, 'menuJourResume', 3000) &&
+        txt(d, 'participation', 500) && txt(d, 'liens', 2000) &&
+        lst(d, 'liens', 10) && lst(d, 'equipements', 50) && lst(d, 'papiers', 50) && lst(d, 'services', 50);
+    }
+
     // Profils utilisateurs
     // - lecture : son propre profil, ou tout profil pour un membre actif / un admin
     // - création : uniquement en statut "en_attente" avec le rôle "member"
@@ -24,11 +47,11 @@ service cloud.firestore {
       allow read: if isSignedIn() && (request.auth.uid == userId || isActiveMember() || isAdmin());
       allow create: if isSignedIn() && request.auth.uid == userId &&
         request.resource.data.statut == 'en_attente' &&
-        request.resource.data.role == 'member';
+        request.resource.data.role == 'member' && tailleOk(request.resource.data);
       allow update: if isSignedIn() && (
         (request.auth.uid == userId &&
           request.resource.data.statut == resource.data.statut &&
-          request.resource.data.role == resource.data.role) ||
+          request.resource.data.role == resource.data.role && tailleOk(request.resource.data)) ||
         isAdmin());
       allow delete: if isAdmin();
     }
@@ -44,7 +67,7 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(
           ['nom', 'prenom', 'email', 'ville', 'activite', 'competences', 'anciennete', 'reseaux',
            'attentes', 'info', 'pays', 'presentation', 'logo', 'photo', 'statutFiche', 'aConfirmer',
-           'cherche', 'propose', 'tags', 'majLe']);
+           'cherche', 'propose', 'tags', 'majLe']) && tailleOk(request.resource.data);
     }
 
     // Entreprises des membres (5 maximum par membre, contrôlé par l'application) : membres actifs uniquement
@@ -53,10 +76,10 @@ service cloud.firestore {
         (resource.data.statut == 'publie' || resource.data.ownerUid == request.auth.uid));
       allow create: if isAdmin() || (isActiveMember() &&
         request.resource.data.ownerUid == request.auth.uid &&
-        request.resource.data.statut == 'publie');
+        request.resource.data.statut == 'publie' && tailleOk(request.resource.data));
       allow update: if isAdmin() || (isActiveMember() &&
         resource.data.ownerUid == request.auth.uid &&
-        request.resource.data.ownerUid == resource.data.ownerUid);
+        request.resource.data.ownerUid == resource.data.ownerUid && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
 
       // photos de l'entreprise, rangées à part pour garder les listes légères
@@ -72,11 +95,11 @@ service cloud.firestore {
       allow read: if isActiveMember();
       // un membre crée une recommandation "en_attente" ; un admin peut la publier directement
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.statut == 'en_attente');
+        (isAdmin() || request.resource.data.statut == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
           request.resource.data.ownerUid == resource.data.ownerUid &&
-          request.resource.data.get('statut', 'valide') == resource.data.get('statut', 'valide')) ||
+          request.resource.data.get('statut', 'valide') == resource.data.get('statut', 'valide') && tailleOk(request.resource.data)) ||
         (isActiveMember() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nbAvis', 'sommeNotes']));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
@@ -84,7 +107,7 @@ service cloud.firestore {
       match /avis/{avisId} {
         allow read: if isActiveMember();
         allow create, update: if isActiveMember() && request.auth.uid == avisId &&
-          request.resource.data.uid == request.auth.uid;
+          request.resource.data.uid == request.auth.uid && tailleOk(request.resource.data);
         allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == avisId);
       }
     }
@@ -93,17 +116,17 @@ service cloud.firestore {
     match /demandes/{did} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.auteurUid == request.auth.uid &&
-        request.resource.data.statut == 'ouverte';
+        request.resource.data.statut == 'ouverte' && tailleOk(request.resource.data);
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.auteurUid == request.auth.uid &&
-          request.resource.data.auteurUid == resource.data.auteurUid) ||
+          request.resource.data.auteurUid == resource.data.auteurUid && tailleOk(request.resource.data)) ||
         (isActiveMember() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nbReponses']));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.auteurUid == request.auth.uid);
 
       match /reponses/{rid} {
         allow read: if isActiveMember();
-        allow create: if isActiveMember() && request.resource.data.auteurUid == request.auth.uid;
+        allow create: if isActiveMember() && request.resource.data.auteurUid == request.auth.uid && tailleOk(request.resource.data);
         allow delete: if isAdmin() || (isSignedIn() && resource.data.auteurUid == request.auth.uid);
       }
     }
@@ -116,10 +139,10 @@ service cloud.firestore {
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
         (isAdmin() ||
           request.resource.data.get('statut', 'valide') == 'en_attente' ||
-          request.resource.data.get('typeAnnonce', 'kilos') != 'accompagnateur');
+          request.resource.data.get('typeAnnonce', 'kilos') != 'accompagnateur') && tailleOk(request.resource.data);
       allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
-        request.resource.data.get('statut', 'valide') == resource.data.get('statut', 'valide'));
+        request.resource.data.get('statut', 'valide') == resource.data.get('statut', 'valide') && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
@@ -127,11 +150,11 @@ service cloud.firestore {
     match /fil/{fid} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
           request.resource.data.ownerUid == resource.data.ownerUid &&
-          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente')) ||
+          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente') && tailleOk(request.resource.data)) ||
         (isActiveMember() && resource.data.get('statut', 'en_attente') == 'valide' &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['aimes']));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
@@ -164,9 +187,9 @@ service cloud.firestore {
     // Loisirs : bonnes adresses, sorties, liens vidéo et photos (rangées dans "medias")
     match /loisirs/{lid} {
       allow read: if isActiveMember();
-      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid;
+      allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid && tailleOk(request.resource.data);
       allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
-        request.resource.data.ownerUid == resource.data.ownerUid);
+        request.resource.data.ownerUid == resource.data.ownerUid && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
 
       match /medias/{mediaId} {
@@ -180,10 +203,10 @@ service cloud.firestore {
     match /immobilier/{iid} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
-        request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente'));
+        request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente') && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
 
       match /medias/{mediaId} {
@@ -197,10 +220,10 @@ service cloud.firestore {
     match /cours/{cid} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
         request.resource.data.ownerUid == resource.data.ownerUid &&
-        request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente'));
+        request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente') && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
 
       match /medias/{mediaId} {
@@ -214,11 +237,11 @@ service cloud.firestore {
     match /restos/{rid} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
           request.resource.data.ownerUid == resource.data.ownerUid &&
-          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente')) ||
+          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente') && tailleOk(request.resource.data)) ||
         (isActiveMember() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nbAvis', 'sommeNotes']));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
@@ -226,7 +249,7 @@ service cloud.firestore {
       match /avis/{avisId} {
         allow read: if isActiveMember();
         allow create, update: if isActiveMember() && request.auth.uid == avisId &&
-          request.resource.data.uid == request.auth.uid;
+          request.resource.data.uid == request.auth.uid && tailleOk(request.resource.data);
         allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == avisId);
       }
 
@@ -241,11 +264,11 @@ service cloud.firestore {
     match /structures/{sid} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
           request.resource.data.ownerUid == resource.data.ownerUid &&
-          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente'));
+          request.resource.data.get('statut', 'en_attente') == resource.data.get('statut', 'en_attente') && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
 
       match /publications/{pid} {
@@ -266,10 +289,10 @@ service cloud.firestore {
     match /initiatives/{iid} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
         resource.data.get('statut', 'en_attente') == 'en_attente' && request.resource.data.get('statut', 'en_attente') == 'en_attente' &&
-        request.resource.data.ownerUid == resource.data.ownerUid);
+        request.resource.data.ownerUid == resource.data.ownerUid && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
@@ -277,14 +300,14 @@ service cloud.firestore {
     match /besoins/{bid} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente');
+        (isAdmin() || request.resource.data.get('statut', 'en_attente') == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resolu'])) ||
         (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
           resource.data.get('statut', 'en_attente') == 'en_attente' &&
           request.resource.data.get('statut', 'en_attente') == 'en_attente' &&
-          request.resource.data.ownerUid == resource.data.ownerUid);
+          request.resource.data.ownerUid == resource.data.ownerUid && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
@@ -292,16 +315,16 @@ service cloud.firestore {
     match /demarches/{did} {
       allow read: if isActiveMember();
       allow create: if isActiveMember() && request.resource.data.ownerUid == request.auth.uid &&
-        (isAdmin() || request.resource.data.statut == 'en_attente');
+        (isAdmin() || request.resource.data.statut == 'en_attente') && tailleOk(request.resource.data);
       allow update: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid &&
         resource.data.statut == 'en_attente' && request.resource.data.statut == 'en_attente' &&
-        request.resource.data.ownerUid == resource.data.ownerUid);
+        request.resource.data.ownerUid == resource.data.ownerUid && tailleOk(request.resource.data));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
     // Signalements de comportements : un membre actif peut en créer (un par cible), seuls les administrateurs les lisent
     match /signalements/{sid} {
-      allow create: if isActiveMember() && request.resource.data.auteurUid == request.auth.uid;
+      allow create: if isActiveMember() && request.resource.data.auteurUid == request.auth.uid && tailleOk(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
 
@@ -328,11 +351,11 @@ service cloud.firestore {
       allow create: if isAdmin() || (isActiveMember() &&
         request.resource.data.created_by == request.auth.uid &&
         request.resource.data.categorie == 'membres' &&
-        request.resource.data.statut == 'en_attente');
+        request.resource.data.statut == 'en_attente' && tailleOk(request.resource.data));
       allow update: if isAdmin() ||
         (isActiveMember() && resource.data.created_by == request.auth.uid &&
           resource.data.get('statut', 'valide') == 'en_attente' && request.resource.data.statut == 'en_attente' &&
-          request.resource.data.created_by == resource.data.created_by) ||
+          request.resource.data.created_by == resource.data.created_by && tailleOk(request.resource.data)) ||
         (isActiveMember() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees']));
       allow delete: if isAdmin() || (isSignedIn() && resource.data.created_by == request.auth.uid);
@@ -495,7 +518,7 @@ service cloud.firestore {
     match /aides/{aid} {
       allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || estComite() || isAdmin());
       allow create: if isActiveMember() && request.resource.data.uid == request.auth.uid &&
-        request.resource.data.statut == 'nouvelle';
+        request.resource.data.statut == 'nouvelle' && tailleOk(request.resource.data);
       allow update: if isAdmin() || estComite() || gereCaisse();
       allow delete: if isAdmin() ||
         (isSignedIn() && resource.data.uid == request.auth.uid && resource.data.statut == 'nouvelle');
@@ -510,7 +533,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin() ||
         (resource.data.statut == 'valide' && isActiveMember()));
       allow create: if isActiveMember() && request.resource.data.uid == request.auth.uid &&
-        request.resource.data.statut == 'en_attente';
+        request.resource.data.statut == 'en_attente' && tailleOk(request.resource.data);
       allow update: if isAdmin();
       allow delete: if isAdmin() ||
         (isSignedIn() && resource.data.uid == request.auth.uid && resource.data.statut == 'en_attente');
